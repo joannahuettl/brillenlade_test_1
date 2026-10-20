@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Klarsicht Optik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{
+  --paper:#EEF2F1; --surface:#FFFFFF; --sunken:#E3E9E8; --ink:#16202A; --muted:#58646F;
+  --line:#D3DBDA; --accent:#0F6E5C; --accent-hover:#0B5A4B; --accent-ink:#FFFFFF;
+  --danger:#B3261E; --overlay:rgba(14,22,28,.55);
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Instrument Sans","Segoe UI",system-ui,sans-serif;
+  --r-sm:6px; --r-md:12px; --r-lg:22px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#11191E; --surface:#19232A; --sunken:#0D1418; --ink:#E6ECEB; --muted:#9AA7AD;
+    --line:#2B3940; --accent:#3FB59A; --accent-hover:#5CC9AE; --accent-ink:#05231C;
+    --danger:#F08A82; --overlay:rgba(0,0,0,.65);
+    color-scheme:dark;
+  }
+  .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.85)}
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.55 var(--body);-webkit-font-smoothing:antialiased}
+body.locked{overflow:hidden}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:1.08;margin:0;letter-spacing:-.015em}
+p{margin:0}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:999px;padding:12px 22px;font-weight:600;cursor:pointer;text-decoration:none;transition:background .15s}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--ink)}
+.btn-small{padding:8px 14px;font-size:14px}
+.icon-btn{background:none;border:0;cursor:pointer;padding:8px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;color:var(--ink)}
+.icon-btn:hover{background:var(--sunken)}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;font-size:14px}
+
+/* Topbar */
+.topbar{background:var(--accent);color:var(--accent-ink);font-size:14px;font-weight:500}
+.topbar-in{max-width:1400px;display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:36px;flex-wrap:wrap}
+.topbar button.cta{background:none;border:0;color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:0;margin-left:6px}
+.util{display:flex;align-items:center;gap:16px}
+.util a{color:inherit;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.util a:hover,.util a[aria-current="page"]{text-decoration:underline;text-underline-offset:3px}
+.lang{display:inline-flex;border:1.5px solid currentColor;border-radius:999px;padding:2px}
+.lang button{background:none;border:0;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:700;cursor:pointer;color:inherit}
+.lang button[aria-pressed="true"]{background:var(--accent-ink);color:var(--accent)}
+
+/* Header */
+header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.bar{max-width:1400px;display:flex;align-items:center;gap:10px;height:68px}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:22px;color:var(--ink);text-decoration:none;letter-spacing:-.02em}
+.logo svg{width:44px}
+nav.main{display:flex;gap:2px;margin-left:8px}
+nav.main a{padding:8px 10px;border-radius:999px;font-weight:600;font-size:15.5px;color:var(--ink);text-decoration:none;white-space:nowrap;position:relative}
+nav.main a:hover,nav.main a.hot{background:var(--sunken)}
+.flyout{position:absolute;left:0;right:0;top:100%;background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 24px 40px rgba(0,0,0,.12)}
+.flyout[hidden]{display:none}
+.fly-in{max-width:1400px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) 300px;gap:32px;padding-top:28px;padding-bottom:32px}
+.fly-col h3{font-size:15px;font-family:var(--body);font-weight:600;color:var(--muted);margin-bottom:10px}
+.fly-col ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.fly-col button{background:none;border:0;padding:6px 0;font-size:16px;cursor:pointer;text-align:left;color:var(--ink)}
+.fly-col button:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.fly-feature{border-radius:var(--r-md);overflow:hidden;background:var(--sunken);position:relative;min-height:180px;border:0;padding:0;cursor:pointer;text-align:left}
+.fly-feature img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.fly-feature span{position:absolute;left:12px;bottom:12px;background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;font-weight:600;font-size:14px}
+nav.main a[aria-current="page"]{color:var(--accent)}
+nav.main a[aria-current="page"]::after{content:"";position:absolute;left:10px;right:10px;bottom:1px;height:2px;border-radius:2px;background:var(--accent)}
+.menu-btn{display:none}
+.search{flex:1 1 240px;min-width:128px;max-width:300px;margin-left:auto;position:relative}
+.bar .icon-btn,.logo,nav.main{flex-shrink:0}
+.search input{width:100%;padding:10px 14px 10px 38px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface)}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;color:var(--muted)}
+.cart-count{background:var(--accent);color:var(--accent-ink);border-radius:999px;font-size:12px;font-weight:600;min-width:20px;height:20px;display:inline-grid;place-items:center;padding:0 6px}
+.account-name{font-weight:500;font-size:14px}
+
+/* Hero */
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;padding-top:48px;padding-bottom:64px}
+.hero h1{font-size:clamp(38px,4.6vw,64px);max-width:13ch}
+.hero p.lead{font-size:19px;color:var(--muted);max-width:44ch;margin-top:20px}
+.hero .ctas{display:flex;gap:12px;margin-top:32px;flex-wrap:wrap}
+.hero .facts{display:flex;gap:28px;margin-top:40px;color:var(--muted);font-size:14px;flex-wrap:wrap}
+.hero .facts strong{display:block;color:var(--ink);font-size:16px}
+.mirror-col{display:flex;flex-direction:column;align-items:center;gap:20px}
+.mirror{width:min(420px,90%,58vh);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 38% 32%,var(--surface) 0%,var(--sunken) 78%);border:1px solid var(--line);display:grid;place-items:center;box-shadow:inset 0 0 0 14px var(--paper),inset 0 0 0 15px var(--line)}
+.mirror{overflow:hidden}
+.mirror .frame{width:100%;height:100%;transition:opacity .25s,transform .35s cubic-bezier(.2,.8,.2,1)}
+.mirror .frame.swap{opacity:0;transform:translateY(10px) scale(.96)}
+.shape-picker{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.shape-picker button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;cursor:pointer;font-size:14px;font-weight:500}
+.shape-picker button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.shape-link{font-size:14px;font-weight:600;background:none;border:0;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+/* Collection */
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.section-head h2{font-size:clamp(30px,4vw,44px)}
+.result-count{color:var(--muted);font-size:14px}
+.shop{display:grid;grid-template-columns:240px 1fr;gap:36px;padding-bottom:80px}
+.filters{position:sticky;top:92px;align-self:start;display:flex;flex-direction:column;gap:26px}
+.filters fieldset{border:0;padding:0;margin:0}
+.filters legend{font-weight:600;margin-bottom:10px;font-size:15px}
+.seg,.checks{display:flex;flex-direction:column;gap:4px}
+.seg label,.checks label{display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:4px 0}
+.seg input,.checks input{accent-color:var(--accent);width:17px;height:17px}
+.range-row{display:flex;justify-content:space-between;font-size:14px;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.filters select{width:100%;padding:10px 12px;border-radius:var(--r-sm);border:1.5px solid var(--line);background:var(--surface)}
+.reset{background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:0;text-align:left;text-decoration:underline;text-underline-offset:3px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px 18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;display:flex;flex-direction:column}
+.card .shot{background:var(--sunken);aspect-ratio:4/3;display:grid;place-items:center;position:relative;cursor:pointer;border:0;padding:0;width:100%}
+.card .shot svg{width:76%}
+.pimg{width:100%;height:100%;object-fit:cover;display:block}
+.pimg-fb{width:100%;height:100%;display:grid;place-items:center}.pimg-fb svg{width:76%}
+.card .shot{overflow:hidden}
+.card .shot .pimg{transition:transform .4s}
+.card .shot:hover .pimg{transform:scale(1.04)}
+.badge{position:absolute;z-index:1;top:12px;left:12px;background:var(--surface);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600}
+.badge.sun{background:var(--ink);color:var(--paper)}
+.card .body{padding:16px 16px 18px;display:flex;flex-direction:column;gap:10px;flex:1}
+.card .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card h3{font-size:22px}
+.card .price{font-weight:600}
+.card .meta{color:var(--muted);font-size:14px}
+.dots{display:flex;gap:7px}
+.dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1.5px var(--line);cursor:pointer;padding:0}
+.dot[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+.card .actions{display:flex;gap:8px;margin-top:auto;padding-top:4px}
+.card .actions .btn{flex:1}
+.empty{grid-column:1/-1;background:var(--surface);border:1px dashed var(--line);border-radius:var(--r-md);padding:40px;text-align:center}
+.empty p{color:var(--muted);margin:8px 0 16px}
+
+.service{background:var(--ink);color:var(--paper);padding:56px 0}
+.service .wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
+.service h3{font-size:22px;margin-bottom:8px}
+.service p{opacity:.8;font-size:15px}
+
+footer{padding:56px 0 40px;border-top:1px solid var(--line)}
+.foot{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:40px}
+.foot h3{font-size:24px;margin-bottom:10px}
+.foot p{color:var(--muted)}
+.nl-form{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.nl-form input{flex:1;min-width:200px;padding:12px 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface)}
+.foot ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;color:var(--muted)}
+.foot ul a{color:inherit;text-decoration:none}
+.foot ul a:hover{color:var(--ink);text-decoration:underline}
+.legal{margin-top:40px;font-size:13px;color:var(--muted)}
+
+/* Anmeldung */
+.overlay{position:fixed;inset:0;background:var(--paper);z-index:50;display:flex;padding:24px;overflow-y:auto}
+.overlay[hidden]{display:none}
+.panel{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);width:min(460px,100%);margin:auto;padding:32px;box-shadow:0 30px 80px rgba(0,0,0,.25)}
+.panel .lang{position:absolute;top:20px;right:20px;color:var(--accent)}
+.panel .lang button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.panel h2{font-size:30px;padding-right:90px}
+.panel .sub{color:var(--muted);margin-top:8px}
+.tabs{display:flex;background:var(--sunken);border-radius:999px;padding:4px;margin:24px 0 20px}
+.tabs button{flex:1;border:0;background:none;padding:9px;border-radius:999px;cursor:pointer;font-weight:600;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1.5px var(--line),0 1px 3px rgba(0,0,0,.12)}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;min-width:0}
+.field label{font-size:14px;font-weight:600}
+.field input,.field select{width:100%;min-width:0;padding:12px 14px;border-radius:var(--r-sm);border:1.5px solid var(--line);background:var(--paper)}
+.field input[aria-invalid="true"]{border-color:var(--danger)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.err{color:var(--danger);font-size:13px;min-height:18px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14px;margin:6px 0 14px;cursor:pointer}
+.check input{accent-color:var(--accent);width:18px;height:18px;margin-top:1px;flex-shrink:0}
+.panel .btn-primary{width:100%;margin-top:6px}
+.hint{font-size:13px;color:var(--muted);margin-top:14px}
+.interest{display:flex;flex-direction:column;gap:4px;background:var(--paper);border-radius:var(--r-md);padding:14px 16px;margin:20px 0}
+.stack{display:flex;flex-direction:column;gap:10px}
+
+/* Dialoge */
+dialog{border:0;padding:0;background:var(--surface);color:var(--ink);border-radius:var(--r-lg);width:min(980px,calc(100% - 24px));max-height:calc(100vh - 32px)}
+dialog::backdrop{background:var(--overlay)}
+.dlg-close{position:absolute;top:14px;right:14px;z-index:3;background:var(--surface);border:1px solid var(--line);width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:20px;line-height:1}
+.pd{display:grid;grid-template-columns:1fr 1fr;min-height:520px}
+.pd .stage{background:var(--sunken);display:grid;place-items:center;padding:0;overflow:hidden;border-radius:var(--r-lg) 0 0 var(--r-lg)}
+.pd .stage .pimg{min-height:520px}
+.pd .info{padding:36px 32px;display:flex;flex-direction:column;gap:20px;overflow-y:auto;max-height:calc(100vh - 32px)}
+.pd h2{font-size:40px}
+.pd .meta{color:var(--muted)}
+.opt-title{font-weight:600;font-size:15px;margin-bottom:8px}
+.opt-title span{font-weight:400;color:var(--muted)}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{border:1.5px solid var(--line);background:var(--surface);border-radius:var(--r-sm);padding:9px 14px;cursor:pointer;font-size:14px;text-align:left}
+.pill small{display:block;color:var(--muted)}
+.pill[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);padding-top:16px;font-size:15px}
+.total strong{font-family:var(--display);font-size:30px}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.pd .btns .btn{flex:1}
+
+/* Anprobe */
+.to{display:grid;grid-template-columns:1.6fr 1fr}
+.to-stage{position:relative;background:#0c1216;aspect-ratio:4/3;overflow:hidden;border-radius:var(--r-lg) 0 0 var(--r-lg);touch-action:none;user-select:none}
+.to-stage video,.to-stage img.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.to-stage video{transform:scaleX(-1)}
+.to-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#E6ECEB;text-align:center;padding:24px}
+.to-placeholder p{max-width:36ch;opacity:.8}
+.to-placeholder .face{width:120px;height:150px;border:2px dashed rgba(255,255,255,.4);border-radius:50% 50% 46% 46%}
+.to-glasses{position:absolute;cursor:grab;transform-origin:center;filter:drop-shadow(0 4px 6px rgba(0,0,0,.35))}
+.to-glasses:active{cursor:grabbing}
+.to-glasses svg{width:100%;display:block;pointer-events:none}
+.to-status{position:absolute;left:12px;bottom:12px;background:rgba(0,0,0,.6);color:#fff;font-size:13px;padding:6px 12px;border-radius:999px}
+.to-side{padding:28px 24px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;max-height:calc(100vh - 32px)}
+.to-side h2{font-size:28px;padding-right:40px}
+.to-src{display:flex;gap:8px;flex-wrap:wrap}
+.slider label{display:flex;justify-content:space-between;font-size:14px;font-weight:600;margin-bottom:4px}
+.strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.strip button{background:var(--sunken);border:1.5px solid transparent;border-radius:var(--r-sm);padding:8px 6px 4px;cursor:pointer;font-size:12px}
+.strip button svg{width:100%}
+.strip button[aria-pressed="true"]{border-color:var(--accent)}
+.to-msg{font-size:14px;background:var(--paper);border-radius:var(--r-sm);padding:10px 12px;color:var(--muted)}
+.to-msg.error{color:var(--danger)}
+.toggle{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
+.toggle input{accent-color:var(--accent);width:18px;height:18px}
+
+/* Warenkorb */
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,100%);background:var(--surface);z-index:60;display:flex;flex-direction:column;transform:translateX(100%);visibility:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility .3s}
+.drawer.open{transform:none;visibility:visible;box-shadow:-20px 0 60px rgba(0,0,0,.2)}
+.drawer-head{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--line)}
+.drawer-head h2{font-size:26px}
+.drawer-body{flex:1;overflow-y:auto;padding:12px 24px}
+.ci{display:grid;grid-template-columns:84px 1fr auto;gap:14px;padding:16px 0;border-bottom:1px solid var(--line);align-items:start}
+.ci .thumb{background:var(--sunken);border-radius:var(--r-sm);padding:10px 6px;overflow:hidden}
+.ci .thumb.photo{padding:0;aspect-ratio:4/3}
+.ci .thumb svg{width:100%;display:block}
+.ci h3{font-size:18px}
+.ci p{font-size:13px;color:var(--muted)}
+.qty{display:flex;align-items:center;gap:6px;margin-top:8px}
+.qty button{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);background:none;cursor:pointer}
+.ci .rm{background:none;border:0;color:var(--muted);font-size:13px;cursor:pointer;text-decoration:underline;margin-top:6px;padding:0}
+.drawer-foot{padding:20px 24px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.drawer-foot:empty{display:none}
+.drawer-foot .line{display:flex;justify-content:space-between;font-size:15px}
+.drawer-foot .sum{font-weight:600;font-size:18px}
+.drawer-empty{text-align:center;padding:48px 8px;color:var(--muted)}
+.scrim{position:fixed;inset:0;background:var(--overlay);z-index:55}
+.scrim[hidden]{display:none}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(calc(100% + 40px));opacity:0;background:var(--ink);color:var(--paper);padding:12px 20px;border-radius:999px;z-index:80;font-weight:500;transition:transform .3s;max-width:calc(100% - 32px)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* Unterseiten */
+.view[hidden]{display:none}
+.page{padding-top:48px;padding-bottom:88px}
+.page-head{max-width:62ch;margin-bottom:36px}
+.page-head h1{font-size:clamp(36px,4.4vw,56px)}
+.page-head p{color:var(--muted);font-size:18px;margin-top:14px}
+.page h2{font-size:30px;margin-bottom:16px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:24px;display:flex;flex-direction:column;gap:10px}
+.tile h3{font-size:23px}
+.tile p{color:var(--muted);font-size:15px}
+.tile .meta{font-size:14px;color:var(--muted)}
+.tile .row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:auto;padding-top:12px}
+.tile .price{font-weight:600;font-size:18px}
+.tile .icon{width:56px;height:56px;color:var(--accent)}
+.brand-mark{font-family:var(--display);font-size:32px;line-height:1.1;padding:20px 0 18px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.band{margin-top:40px;background:var(--sunken);border-radius:var(--r-lg);padding:28px 32px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.band h3{font-size:24px}
+.band p{color:var(--muted);margin-top:4px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+.advisor{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:28px}
+.advisor .result{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
+.advisor .result p{color:var(--muted);margin:6px 0 16px}
+.faq details{border-bottom:1px solid var(--line);padding:16px 0}
+.faq details:first-of-type{border-top:1px solid var(--line)}
+.faq summary{cursor:pointer;font-weight:600;font-size:17px}
+.faq details p{color:var(--muted);margin-top:10px;max-width:60ch}
+.booking-wrap{display:grid;grid-template-columns:minmax(0,720px) 1fr;gap:40px;align-items:start}
+.booking{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:32px;display:flex;flex-direction:column;gap:22px}
+.booking .field{margin:0}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:8px}
+.slots .pill{text-align:center}
+.slots .pill[disabled]{opacity:.4;cursor:not-allowed;text-decoration:line-through}
+.confirm{background:var(--surface);border:1.5px solid var(--accent);border-radius:var(--r-lg);padding:28px}
+.confirm h2{font-size:28px;margin-bottom:10px}
+.confirm p{color:var(--muted);margin-bottom:18px}
+.my-appts h3{font-size:20px;margin-bottom:10px}
+.my-appts ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.my-appts li{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px;font-size:15px}
+.my-appts li span{display:block;color:var(--muted);font-size:14px}
+
+/* Filialfinder */
+.finder{display:grid;grid-template-columns:390px 1fr;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;height:min(680px,calc(100vh - 200px));min-height:540px}
+.finder-side{display:flex;flex-direction:column;border-right:1px solid var(--line);min-height:0}
+.finder-search{padding:20px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.finder-search form{display:flex;gap:8px}
+.finder-search input[type=search]{flex:1;min-width:0;padding:11px 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--paper)}
+.finder-tools{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:center;font-size:14px}
+.finder-tools label{display:flex;align-items:center;gap:8px;cursor:pointer}
+.finder-tools input{accent-color:var(--accent);width:17px;height:17px}
+.finder-body{overflow-y:auto;flex:1;min-height:0}
+.finder-head{padding:12px 20px;font-size:14px;color:var(--muted);border-bottom:1px solid var(--line)}
+.finder-head.error{color:var(--danger)}
+.store-item{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:16px 20px;cursor:pointer}
+.store-item:hover{background:var(--sunken)}
+.store-item h3{font-size:19px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.store-item h3 span{font-family:var(--body);font-size:14px;font-weight:500;color:var(--muted);white-space:nowrap}
+.store-item p{font-size:14px;color:var(--muted)}
+.status{font-size:13px;font-weight:600;margin-top:4px;display:block}
+.status.open{color:var(--accent)}
+.status.closed{color:var(--muted)}
+.store-detail{padding:20px;display:flex;flex-direction:column;gap:18px}
+.store-detail h2{font-size:28px;margin:0}
+.store-detail dl{margin:0;display:grid;grid-template-columns:118px minmax(0,1fr);gap:10px 18px;font-size:15px}
+.store-detail dt{color:var(--muted)}
+.store-detail dd{margin:0;overflow-wrap:anywhere}
+.store-detail dd small{display:block;color:var(--muted);font-size:14px}
+.hours{width:100%;border-collapse:collapse;font-size:15px}
+.hours td{padding:7px 0;border-bottom:1px solid var(--line)}
+.hours td:last-child{text-align:right}
+.hours tr.today td{font-weight:600}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{background:var(--sunken);border-radius:999px;padding:4px 12px;font-size:13px}
+.store-detail .btns .btn{flex:1}
+.finder-map{position:relative;min-height:0;isolation:isolate;z-index:0}
+#mapBox{position:absolute;inset:0;background:var(--sunken)}
+.map-err{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
+.leaflet-container{font:inherit}
+.pin{background:none;border:0}
+.pin span{display:block;width:24px;height:24px;margin:2px;border-radius:50% 50% 50% 0;background:var(--accent);border:3px solid #fff;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.35);transition:transform .15s}
+.pin.active span{background:#16202A;transform:rotate(-45deg) scale(1.3)}
+.you span{display:block;width:18px;height:18px;border-radius:50%;background:#2E6FB0;border:3px solid #fff;box-shadow:0 0 0 7px rgba(46,111,176,.25)}
+
+@media (max-width:1280px){
+  .menu-btn{display:inline-flex}
+  .flyout{display:none!important}
+  nav.main{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 20px 18px;margin:0;box-shadow:0 20px 40px rgba(0,0,0,.12)}
+  nav.main.open{display:flex}
+  nav.main a{padding:12px 10px;font-size:17px;border-radius:var(--r-sm)}
+  nav.main a[aria-current="page"]{background:var(--sunken)}
+  nav.main a[aria-current="page"]::after{display:none}
+  .search{max-width:none}
+}
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr;padding-top:40px;padding-bottom:56px;gap:36px}
+  .shop{grid-template-columns:1fr}
+  .filters{position:static;flex-direction:row;overflow-x:auto;gap:24px;padding-bottom:8px}
+  .filters fieldset{min-width:170px}
+  .pd,.to,.split,.booking-wrap{grid-template-columns:1fr}
+  .to-stage{border-radius:var(--r-lg) var(--r-lg) 0 0}
+  .pd .info,.to-side{max-height:none}
+  .service .wrap,.foot{grid-template-columns:1fr}
+  .finder{grid-template-columns:1fr;height:auto}
+  .finder-map{height:340px;order:-1}
+  .finder-side{border-right:0}
+  .finder-body{max-height:520px}
+  .topbar-in{justify-content:center;padding-top:6px;padding-bottom:6px}
+}
+@media (max-width:560px){
+  .search,.account-name{display:none}
+  .row2{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body class="locked">
+
+<!-- ============ ANMELDUNG ============ -->
+<div class="overlay" id="authOverlay" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="panel" id="authPanel">
+    <div class="lang" role="group" data-i18n-aria="langAria"><button data-lang="de">DE</button><button data-lang="en">EN</button></div>
+    <div id="authStep">
+      <h2 id="authTitle" data-i18n="authTitle"></h2>
+      <p class="sub" data-i18n="authSub"></p>
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-tab="register" data-i18n="tabRegister"></button>
+        <button role="tab" aria-selected="false" data-tab="login" data-i18n="tabLogin"></button>
+      </div>
+      <form id="registerForm" novalidate>
+        <div class="row2">
+          <div class="field"><label for="rFirst" data-i18n="first"></label><input id="rFirst" autocomplete="given-name"></div>
+          <div class="field"><label for="rLast" data-i18n="last"></label><input id="rLast" autocomplete="family-name"></div>
+        </div>
+        <div class="field"><label for="rMail" data-i18n="email"></label><input id="rMail" type="email" autocomplete="email"></div>
+        <div class="field"><label for="rPass" data-i18n="password"></label><input id="rPass" type="password" autocomplete="new-password"></div>
+        <label class="check"><input type="checkbox" id="rTerms"> <span data-i18n-html="terms"></span></label>
+        <p class="err" id="regErr" role="alert"></p>
+        <button class="btn btn-primary" type="submit" data-i18n="tabRegister"></button>
+      </form>
+      <form id="loginForm" novalidate hidden>
+        <div class="field"><label for="lMail" data-i18n="email"></label><input id="lMail" type="email" autocomplete="email"></div>
+        <div class="field"><label for="lPass" data-i18n="password"></label><input id="lPass" type="password" autocomplete="current-password"></div>
+        <p class="err" id="logErr" role="alert"></p>
+        <button class="btn btn-primary" type="submit" data-i18n="tabLogin"></button>
+        <p class="hint" data-i18n="loginHint"></p>
+      </form>
+    </div>
+    <div id="newsletterStep" hidden>
+      <h2 data-i18n="nlTitle"></h2>
+      <p class="sub" data-i18n="nlSub"></p>
+      <div class="interest">
+        <label class="check" style="margin:0"><input type="checkbox" value="collections" checked> <span data-i18n="nlI1"></span></label>
+        <label class="check" style="margin:0"><input type="checkbox" value="offers" checked> <span data-i18n="nlI2"></span></label>
+        <label class="check" style="margin:0"><input type="checkbox" value="eyetest"> <span data-i18n="nlI3"></span></label>
+      </div>
+      <div class="stack">
+        <button class="btn btn-primary" id="nlYes" data-i18n="nlYes"></button>
+        <button class="btn btn-ghost" id="nlNo" data-i18n="nlNo"></button>
+      </div>
+      <p class="hint" data-i18n="nlHint"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOPBAR & HEADER ============ -->
+<div class="topbar">
+  <div class="wrap topbar-in">
+    <p><span data-i18n="topbar"></span><button class="cta" data-go="termin" data-i18n="topbarCta"></button></p>
+    <div class="util">
+      <a href="#/filialen" id="storeLink"><svg width="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg><span data-i18n="findStore"></span></a>
+      <div class="lang" role="group" data-i18n-aria="langAria"><button data-lang="de">DE</button><button data-lang="en">EN</button></div>
+    </div>
+  </div>
+</div>
+<header>
+  <div class="wrap bar">
+    <button class="icon-btn menu-btn" id="menuBtn" data-i18n-aria="menuOpen" aria-expanded="false" aria-controls="mainNav">
+      <svg width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <a href="#/" class="logo" aria-label="Klarsicht Optik">
+      <svg viewBox="0 0 200 80" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="9"><circle cx="55" cy="40" r="28"/><circle cx="145" cy="40" r="28"/></g><path d="M84 36 Q100 26 116 36" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg>
+      Klarsicht
+    </a>
+    <nav class="main" id="mainNav" data-i18n-aria="navAria">
+      <a href="#/brillen" data-route="brillen" data-i18n="navGlasses"></a>
+      <a href="#/sonnenbrillen" data-route="sonnenbrillen" data-i18n="navSun"></a>
+      <a href="#/designer" data-route="designer" data-i18n="navDesigner"></a>
+      <a href="#/kontaktlinsen" data-route="kontaktlinsen" data-i18n="navCL"></a>
+      <a href="#/hoerakustik" data-route="hoerakustik" data-i18n="navHear"></a>
+      <a href="#/beratung" data-route="beratung" data-i18n="navAdvice"></a>
+      <a href="#/termin" data-route="termin" data-i18n="navBook"></a>
+    </nav>
+    <div class="flyout" id="flyout" hidden></div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+      <label class="sr" for="q" data-i18n="searchLabel"></label>
+      <input id="q" type="search" data-i18n-ph="searchPh">
+    </div>
+    <button class="icon-btn" id="accountBtn" data-i18n-aria="account">
+      <svg width="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+      <span class="account-name" id="accountName"></span>
+    </button>
+    <button class="icon-btn" id="cartBtn" data-i18n-aria="cartOpen">
+      <svg width="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 7h14l-1.5 12h-11z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+      <span class="cart-count" id="cartCount">0</span>
+    </button>
+  </div>
+</header>
+
+<main>
+ <!-- ============ STARTSEITE ============ -->
+ <div class="view" id="view-home">
+  <section class="wrap hero">
+    <div>
+      <h1 data-i18n="heroTitle"></h1>
+      <p class="lead" data-i18n="heroLead"></p>
+      <div class="ctas">
+        <button class="btn btn-primary" id="heroShop" data-i18n="heroShop"></button>
+        <button class="btn btn-ghost" id="heroTry" data-i18n="heroTry"></button>
+      </div>
+      <div class="facts">
+        <span><strong data-i18n="fact1t"></strong><span data-i18n="fact1s"></span></span>
+        <span><strong data-i18n="fact2t"></strong><span data-i18n="fact2s"></span></span>
+      </div>
+    </div>
+    <div class="mirror-col">
+      <div class="mirror"><div class="frame" id="heroFrame"></div></div>
+      <div class="shape-picker" id="shapePicker"></div>
+      <button class="shape-link" id="shapeLink"></button>
+    </div>
+  </section>
+
+  <section class="wrap" id="collection">
+    <div class="section-head"><h2 id="collTitle"></h2><span class="result-count" id="resultCount"></span></div>
+    <div class="shop">
+      <aside class="filters">
+        <fieldset><legend data-i18n="fType"></legend><div class="seg" id="fType"></div></fieldset>
+        <fieldset><legend data-i18n="fFor"></legend><div class="seg" id="fCat"></div></fieldset>
+        <fieldset><legend data-i18n="fShape"></legend><div class="checks" id="fShape"></div></fieldset>
+        <fieldset><legend data-i18n="fMat"></legend><div class="checks" id="fMat"></div></fieldset>
+        <fieldset>
+          <legend data-i18n="fPrice"></legend>
+          <input type="range" id="fPrice" min="40" max="200" step="10" value="200" data-i18n-aria="fPrice">
+          <div class="range-row"><span data-i18n="upTo"></span><span id="fPriceVal"></span></div>
+        </fieldset>
+        <fieldset>
+          <legend><label for="fSort" data-i18n="sort"></label></legend>
+          <select id="fSort"></select>
+        </fieldset>
+        <button class="reset" id="fReset" data-i18n="reset"></button>
+      </aside>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <section class="service">
+    <div class="wrap">
+      <div><h3 data-i18n="sv1t"></h3><p data-i18n="sv1p"></p></div>
+      <div><h3 data-i18n="sv2t"></h3><p data-i18n="sv2p"></p></div>
+      <div><h3 data-i18n="sv3t"></h3><p data-i18n="sv3p"></p></div>
+    </div>
+  </section>
+ </div>
+
+ <!-- ============ DESIGNER ============ -->
+ <div class="view" id="view-designer" hidden>
+  <section class="wrap page">
+    <div class="page-head"><h1 data-i18n="desT"></h1><p data-i18n="desP"></p></div>
+    <div class="tiles" id="brandTiles"></div>
+  </section>
+ </div>
+
+ <!-- ============ KONTAKTLINSEN ============ -->
+ <div class="view" id="view-kontaktlinsen" hidden>
+  <section class="wrap page">
+    <div class="page-head"><h1 data-i18n="clT"></h1><p data-i18n="clP"></p></div>
+    <div class="tiles" id="clTiles"></div>
+    <div class="band">
+      <div><h3 data-i18n="bandT"></h3><p data-i18n="bandP"></p></div>
+      <button class="btn btn-primary" data-book="cl" data-i18n="bandBtn"></button>
+    </div>
+  </section>
+ </div>
+
+ <!-- ============ HÖRAKUSTIK ============ -->
+ <div class="view" id="view-hoerakustik" hidden>
+  <section class="wrap page">
+    <div class="page-head"><h1 data-i18n="hT"></h1><p data-i18n="hP"></p></div>
+    <div class="tiles">
+      <div class="tile">
+        <svg class="icon" viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 40c0 6 8 8 11 3 3-6 11-9 11-19a14 14 0 0 0-28 0"/><path d="M24 25a5 5 0 0 1 10 0c0 4-5 5-5 9"/></svg>
+        <h3 data-i18n="h1t"></h3><p data-i18n="h1p"></p>
+        <div class="row"><span class="meta" data-i18n="h1m"></span><button class="btn btn-primary btn-small" data-book="hoer" data-i18n="h1b"></button></div>
+      </div>
+      <div class="tile">
+        <svg class="icon" viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 14c10-4 20 2 20 12 0 7-6 9-6 15 0 4-4 6-7 4"/><circle cx="40" cy="42" r="5"/></svg>
+        <h3 data-i18n="h2t"></h3><p data-i18n="h2p"></p>
+        <div class="row"><span class="meta" data-i18n="h2m"></span><button class="btn btn-ghost btn-small" data-book="hoer" data-i18n="h2b"></button></div>
+      </div>
+    </div>
+    <h2 style="margin-top:48px" data-i18n="accessories"></h2>
+    <div class="tiles" id="hearTiles"></div>
+  </section>
+ </div>
+
+ <!-- ============ BERATUNG ============ -->
+ <div class="view" id="view-beratung" hidden>
+  <section class="wrap page">
+    <div class="page-head"><h1 data-i18n="bT"></h1><p data-i18n="bP"></p></div>
+    <div class="split">
+      <div class="advisor">
+        <h2 data-i18n="advT"></h2>
+        <p class="opt-title" data-i18n="myFace"></p>
+        <div class="pills" id="facePills"></div>
+        <div class="result" id="faceResult"></div>
+      </div>
+      <div class="faq"><h2 data-i18n="faqT"></h2><div id="faqList"></div></div>
+    </div>
+  </section>
+ </div>
+
+ <!-- ============ TERMIN ============ -->
+ <div class="view" id="view-termin" hidden>
+  <section class="wrap page">
+    <div class="page-head"><h1 data-i18n="tT"></h1><p data-i18n="tP"></p></div>
+    <div class="booking-wrap">
+      <div>
+        <form class="booking" id="bookingForm" novalidate>
+          <div><p class="opt-title" data-i18n="service"></p><div class="pills" id="bkService"></div></div>
+          <div class="row2">
+            <div class="field"><label for="bkStore" data-i18n="store"></label><select id="bkStore"></select></div>
+            <div class="field"><label for="bkDate" data-i18n="date"></label><input id="bkDate" type="date"></div>
+          </div>
+          <div><p class="opt-title"><span data-i18n="time" style="font-weight:600;color:var(--ink)"></span> <span id="bkSlotHint"></span></p><div class="slots" id="bkSlots"></div></div>
+          <div class="row2">
+            <div class="field"><label for="bkName" data-i18n="name"></label><input id="bkName" autocomplete="name"></div>
+            <div class="field"><label for="bkMail" data-i18n="email"></label><input id="bkMail" type="email" autocomplete="email"></div>
+          </div>
+          <p class="err" id="bkErr" role="alert" style="margin:0"></p>
+          <button class="btn btn-primary" type="submit" data-i18n="bookBtn"></button>
+        </form>
+        <div class="confirm" id="bkConfirm" hidden></div>
+      </div>
+      <div class="my-appts" id="myAppts"></div>
+    </div>
+  </section>
+ </div>
+
+ <!-- ============ FILIALEN ============ -->
+ <div class="view" id="view-filialen" hidden>
+  <section class="wrap page">
+    <div class="page-head"><h1 data-i18n="findStore"></h1><p data-i18n="sP"></p></div>
+    <div class="finder">
+      <div class="finder-side">
+        <div class="finder-search">
+          <form id="storeSearch" role="search">
+            <label class="sr" for="storeQ" data-i18n="sSearchPh"></label>
+            <input id="storeQ" type="search" data-i18n-ph="sSearchPh" autocomplete="off">
+            <button class="btn btn-primary btn-small" type="submit" data-i18n="searchPh"></button>
+          </form>
+          <div class="finder-tools">
+            <button class="linkbtn" id="locateBtn" type="button"><svg width="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg><span data-i18n="sLocate"></span></button>
+            <label><input type="checkbox" id="hearOnly"> <span data-i18n="sHearOnly"></span></label>
+          </div>
+        </div>
+        <div class="finder-body" id="finderBody"></div>
+      </div>
+      <div class="finder-map"><div id="mapBox"></div></div>
+    </div>
+  </section>
+ </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <h3>Newsletter</h3>
+        <p id="nlFootText"></p>
+        <form class="nl-form" id="nlFoot" novalidate>
+          <label class="sr" for="nlMail" data-i18n="email"></label>
+          <input id="nlMail" type="email" placeholder="name@example.com">
+          <button class="btn btn-primary" type="submit" data-i18n="subscribe"></button>
+        </form>
+      </div>
+      <div><ul>
+        <li><a href="#/brillen" data-i18n="navGlasses"></a></li>
+        <li><a href="#/sonnenbrillen" data-i18n="navSun"></a></li>
+        <li><a href="#/kontaktlinsen" data-i18n="navCL"></a></li>
+        <li><a href="#/hoerakustik" data-i18n="navHear"></a></li>
+      </ul></div>
+      <div><ul>
+        <li><a href="#/filialen" data-i18n="findStore"></a></li>
+        <li><a href="#/termin" data-i18n="navBook"></a></li>
+        <li><a href="#/beratung" data-i18n="f1"></a></li>
+        <li data-i18n="f2"></li>
+        <li data-i18n="f3"></li>
+      </ul></div>
+    </div>
+    <p class="legal" data-i18n="legal"></p>
+  </div>
+</footer>
+
+<!-- ============ PRODUKTDETAIL ============ -->
+<dialog id="pdDialog" aria-labelledby="pdName">
+  <button class="dlg-close" data-close data-i18n-aria="close">×</button>
+  <div class="pd">
+    <div class="stage" id="pdStage"></div>
+    <div class="info">
+      <div><h2 id="pdName"></h2><p class="meta" id="pdMeta"></p></div>
+      <div><p class="opt-title"><span data-i18n="color" style="font-weight:600;color:var(--ink)"></span> <span id="pdColorName"></span></p><div class="dots" id="pdColors"></div></div>
+      <div><p class="opt-title" data-i18n="size"></p><div class="pills" id="pdSizes"></div></div>
+      <div><p class="opt-title" data-i18n="lenses"></p><div class="pills" id="pdLens"></div></div>
+      <div><p class="opt-title" data-i18n="extras"></p><div class="pills" id="pdExtras"></div></div>
+      <div class="total"><span data-i18n="total"></span><strong id="pdTotal"></strong></div>
+      <div class="btns">
+        <button class="btn btn-primary" id="pdAdd" data-i18n="addCart"></button>
+        <button class="btn btn-ghost" id="pdTry" data-i18n="tryon"></button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- ============ ANPROBE ============ -->
+<dialog id="toDialog" aria-labelledby="toTitle">
+  <button class="dlg-close" data-close data-i18n-aria="close">×</button>
+  <div class="to">
+    <div class="to-stage" id="toStage">
+      <video id="toVideo" playsinline muted hidden></video>
+      <img class="photo" id="toPhoto" alt="" hidden>
+      <div class="to-placeholder" id="toPlaceholder"><div class="face"></div><p data-i18n="toPlaceholder"></p></div>
+      <div class="to-glasses" id="toGlasses" hidden tabindex="0" data-i18n-aria="glassesAria"></div>
+      <span class="to-status" id="toStatus" hidden></span>
+    </div>
+    <div class="to-side">
+      <div><h2 id="toTitle" data-i18n="toTitle"></h2><p id="toModel" style="color:var(--muted)"></p></div>
+      <div class="to-src">
+        <button class="btn btn-primary btn-small" id="toCam"></button>
+        <label class="btn btn-ghost btn-small" for="toFile" data-i18n="upload"></label>
+        <input type="file" id="toFile" accept="image/*" class="sr">
+      </div>
+      <p class="to-msg" id="toMsg"></p>
+      <label class="toggle" id="autoWrap"><input type="checkbox" id="toAuto" checked> <span data-i18n="autoAlign"></span></label>
+      <div class="slider"><label for="toSize"><span data-i18n="size"></span> <span id="toSizeVal"></span></label><input type="range" id="toSize" min="20" max="90" value="46"></div>
+      <div class="slider"><label for="toRot"><span data-i18n="tilt"></span> <span id="toRotVal"></span></label><input type="range" id="toRot" min="-25" max="25" value="0"></div>
+      <div><p class="opt-title" data-i18n="color"></p><div class="dots" id="toColors"></div></div>
+      <div><p class="opt-title" data-i18n="switchModel"></p><div class="strip" id="toStrip"></div></div>
+      <div class="btns">
+        <button class="btn btn-ghost btn-small" id="toSnap" data-i18n="snap"></button>
+        <button class="btn btn-primary btn-small" id="toBuy" data-i18n="toBuy"></button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- ============ WARENKORB ============ -->
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head"><h2 data-i18n="cartTitle"></h2><button class="icon-btn" id="drawerClose" data-i18n-aria="close" style="font-size:22px">×</button></div>
+  <div class="drawer-body" id="cartBody"></div>
+  <div class="drawer-foot" id="cartFoot"></div>
+</aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* =========================================================
+   Einstellungen
+   ========================================================= */
+const REQUIRE_LOGIN = true;   // false = Besucher können ohne Konto stöbern
+let lang = 'de';              // Startsprache: 'de' oder 'en'
+
+/* =========================================================
+   Übersetzungen  [Deutsch, Englisch]
+   ========================================================= */
+const T = {
+  docTitle:['Klarsicht Optik – Brillen online kaufen und anprobieren','Klarsicht Optik – Buy and try on glasses online'],
+  langAria:['Sprache wählen','Choose language'],
+  topbar:['Kostenloser Sehtest in jeder Filiale.','Free eye test in every store.'],
+  topbarCta:['Termin buchen','Book now'],
+  findStore:['Filiale finden','Find a store'],
+  navAria:['Hauptnavigation','Main navigation'],
+  navGlasses:['Brillen','Glasses'], navSun:['Sonnenbrillen','Sunglasses'], navDesigner:['Designer','Designers'],
+  navCL:['Kontaktlinsen','Contact lenses'], navHear:['Hörakustik','Hearing'], navAdvice:['Beratung','Advice'], navBook:['Termin buchen','Appointments'],
+  searchPh:['Suchen','Search'], searchLabel:['Modelle suchen','Search frames'], menuOpen:['Menü öffnen','Open menu'],
+  account:['Konto','Account'], cartOpen:['Warenkorb öffnen','Open cart'], close:['Schließen','Close'],
+
+  authTitle:['Willkommen bei Klarsicht','Welcome to Klarsicht'],
+  authSub:['Melde dich an, um Brillen zu konfigurieren, anzuprobieren und zu bestellen.','Sign in to configure, try on and order glasses.'],
+  tabRegister:['Konto erstellen','Create account'], tabLogin:['Anmelden','Sign in'],
+  first:['Vorname','First name'], last:['Nachname','Last name'], email:['E-Mail','Email'], password:['Passwort','Password'], name:['Name','Name'],
+  terms:['Ich akzeptiere die <a href="#">AGB</a> und habe die <a href="#">Datenschutzerklärung</a> gelesen.','I accept the <a href="#">terms and conditions</a> and have read the <a href="#">privacy policy</a>.'],
+  loginHint:['Noch kein Konto? Wechsle oben zu „Konto erstellen“.','No account yet? Switch to “Create account” above.'],
+  errName:['Gib deinen Vor- und Nachnamen ein.','Enter your first and last name.'],
+  errMail:['Gib eine gültige E-Mail-Adresse ein, zum Beispiel name@beispiel.de.','Enter a valid email address, for example name@example.com.'],
+  errPass:['Das Passwort braucht mindestens 8 Zeichen.','The password needs at least 8 characters.'],
+  errTerms:['Bestätige die AGB und die Datenschutzerklärung, um fortzufahren.','Accept the terms and privacy policy to continue.'],
+  errExists:['Für diese E-Mail gibt es schon ein Konto. Melde dich stattdessen an.','An account with this email already exists. Sign in instead.'],
+  errLogin:['E-Mail oder Passwort stimmt nicht. Prüfe deine Eingabe oder erstelle ein Konto.','Email or password is incorrect. Check your details or create an account.'],
+  nlTitle:['Newsletter abonnieren','Subscribe to our newsletter'],
+  nlSub:['Erhalte neue Kollektionen, Angebote und Erinnerungen an deinen nächsten Sehtest.','Get new collections, offers and reminders for your next eye test.'],
+  nlI1:['Neue Kollektionen','New collections'], nlI2:['Angebote und Aktionen','Offers and promotions'], nlI3:['Erinnerung an den Sehtest','Eye test reminders'],
+  nlYes:['Newsletter abonnieren','Subscribe'], nlNo:['Ohne Newsletter weiter','Continue without newsletter'],
+  nlHint:['Du bekommst eine E-Mail mit einem Bestätigungslink. Abmelden kannst du dich jederzeit.','We’ll send you an email with a confirmation link. You can unsubscribe at any time.'],
+  welcome:['Willkommen, {n}.','Welcome, {n}.'], welcomeBack:['Willkommen zurück, {n}.','Welcome back, {n}.'],
+  nlConfirm:['Fast geschafft: Bestätige den Newsletter über den Link an {m}.','Almost done: confirm your subscription via the link sent to {m}.'],
+  logoutQ:['Angemeldet als {n} ({m}).\n\nMöchtest du dich abmelden?','Signed in as {n} ({m}).\n\nDo you want to sign out?'],
+
+  heroTitle:['Finde die Brille, die zu deinem Gesicht passt.','Find the glasses that suit your face.'],
+  heroLead:['Wähle aus Formen, Farben und Gläsern, probiere jedes Modell live mit deiner Kamera an und bestelle mit deinen Sehwerten nach Hause.','Choose from shapes, colours and lenses, try on every frame live with your camera and order with your prescription to your door.'],
+  heroShop:['Brillen ansehen','Browse glasses'], heroTry:['Mit Kamera anprobieren','Try on with camera'],
+  fact1t:['Einstärkengläser inklusive','Single-vision lenses included'], fact1s:['bei jeder Korrektionsbrille','with all prescription glasses'],
+  fact2t:['30 Tage Rückgabe','30-day returns'], fact2s:['kostenlos per Post','free by post'],
+  shapeLink:['Alle {s}-Brillen ansehen','See all {s} frames'],
+
+  allModels:['Alle Modelle','All frames'], kidsTitle:['Kinderbrillen','Kids’ glasses'],
+  count1:['{n} Modell','{n} frame'], countN:['{n} Modelle','{n} frames'],
+  fType:['Art','Type'], fFor:['Für','For'], fShape:['Form','Shape'], fMat:['Material','Material'], fPrice:['Preis','Price'], upTo:['bis','up to'],
+  sort:['Sortieren','Sort by'], sortPop:['Beliebt','Popular'], sortAsc:['Preis aufsteigend','Price: low to high'], sortDesc:['Preis absteigend','Price: high to low'], sortName:['Name A–Z','Name A–Z'],
+  reset:['Filter zurücksetzen','Reset filters'], all:['Alle','All'],
+  emptyT:['Kein Modell passt zu diesen Filtern','No frames match these filters'], emptyP:['Entferne einzelne Filter oder erhöhe den Maximalpreis.','Remove some filters or raise the maximum price.'],
+  from:['ab {p}','from {p}'], configure:['Konfigurieren','Configure'], tryon:['Anprobieren','Try on'], viewX:['{n} ansehen','View {n}'], colorX:['Farbe {c}','Colour {c}'],
+  badgeSun:['Sonnenbrille','Sunglasses'], badgeKids:['Kinder','Kids'],
+  sv1t:['Sehtest in der Filiale','Eye test in store'], sv1p:['Lass deine Sehwerte kostenlos messen und übertrage sie danach direkt in dein Kundenkonto.','Have your eyes tested for free and transfer the results straight to your account.'],
+  sv2t:['Sehwerte später nachreichen','Add your prescription later'], sv2p:['Bestelle jetzt und lade deinen Brillenpass bis zu 14 Tage nach dem Kauf hoch.','Order now and upload your prescription up to 14 days after purchase.'],
+  sv3t:['Anpassung inklusive','Free fitting'], sv3p:['Sitzt die Brille nicht perfekt, richten wir sie in jeder Filiale kostenlos für dich aus.','If your glasses don’t fit perfectly, any store will adjust them for free.'],
+
+  color:['Farbe','Colour'], size:['Größe','Size'], lenses:['Gläser','Lenses'], extras:['Extras','Extras'], total:['Gesamtpreis','Total price'], addCart:['In den Warenkorb','Add to cart'],
+  included:['inklusive','included'], pdMeta:['{type} in {shape}-Form aus {mat}, {cat}','{type}, {shape} shape, {mat}, {cat}'],
+  inCart:['{n} liegt im Warenkorb.','{n} has been added to your cart.'],
+
+  toTitle:['Virtuell anprobieren','Virtual try-on'],
+  toPlaceholder:['Starte die Kamera oder lade ein Foto hoch. Schau gerade in die Kamera, damit die Brille gut sitzt.','Start your camera or upload a photo. Look straight into the camera so the glasses sit well.'],
+  camStart:['Kamera starten','Start camera'], camStop:['Kamera stoppen','Stop camera'], upload:['Foto hochladen','Upload photo'],
+  autoAlign:['Brille automatisch am Gesicht ausrichten','Align glasses to my face automatically'], tilt:['Neigung','Tilt'],
+  switchModel:['Modell wechseln','Switch frame'], snap:['Foto speichern','Save photo'], toBuy:['Dieses Modell konfigurieren','Configure this frame'],
+  glassesAria:['Brille, zum Verschieben ziehen','Glasses, drag to move'], photoAlt:['Dein hochgeladenes Foto','Your uploaded photo'],
+  mDefault:['Ziehe die Brille an die richtige Stelle. Größe und Neigung stellst du unten ein.','Drag the glasses into place. Adjust size and tilt below.'],
+  mNoSupport:['Dieser Browser unterstützt keinen Kamerazugriff. Lade stattdessen ein Foto hoch.','This browser does not support camera access. Upload a photo instead.'],
+  mFollow:['Die Brille folgt deinem Gesicht. Beweg ruhig den Kopf.','The glasses follow your face. Feel free to move your head.'],
+  mManual:['Ziehe die Brille auf deine Augen und passe Größe und Neigung an.','Drag the glasses over your eyes and adjust size and tilt.'],
+  mBlocked:['Der Kamerazugriff wurde blockiert. Erlaube die Kamera über das Schloss-Symbol in der Adressleiste oder lade ein Foto hoch.','Camera access was blocked. Allow the camera via the lock icon in the address bar or upload a photo.'],
+  mNotFound:['Es wurde keine Kamera gefunden. Schließe eine Kamera an oder lade ein Foto hoch.','No camera was found. Connect a camera or upload a photo.'],
+  mBusy:['Die Kamera wird gerade von einer anderen App verwendet. Schließe diese App und versuche es erneut.','The camera is being used by another app. Close that app and try again.'],
+  mGeneric:['Die Kamera konnte nicht gestartet werden. Die Seite muss über HTTPS laufen. Alternativ kannst du ein Foto hochladen.','The camera could not be started. The page must run over HTTPS. You can upload a photo instead.'],
+  mLoadingFace:['Gesichtserkennung wird geladen …','Loading face tracking …'],
+  mNoTrack:['Automatische Ausrichtung ist nicht verfügbar. Ziehe die Brille auf deine Augen.','Automatic alignment is unavailable. Drag the glasses over your eyes.'],
+  mPhotoDone:['Brille ausgerichtet. Zum Feinjustieren einfach ziehen.','Glasses aligned. Drag to fine-tune.'],
+  mStopped:['Kamera gestoppt.','Camera stopped.'], mPhoto:['Ziehe die Brille auf deine Augen.','Drag the glasses over your eyes.'],
+  mNeedSource:['Starte zuerst die Kamera oder lade ein Foto hoch.','Start the camera or upload a photo first.'],
+  noFace:['Kein Gesicht erkannt','No face detected'], snapSaved:['Foto gespeichert.','Photo saved.'],
+
+  cartTitle:['Warenkorb','Cart'], cartEmpty:['Dein Warenkorb ist leer.','Your cart is empty.'],
+  subtotal:['Zwischensumme','Subtotal'], shipping:['Versand','Shipping'], free:['kostenlos','free'], sum:['Gesamt','Total'], checkout:['Zur Kasse','Checkout'],
+  remove:['Entfernen','Remove'], qtyDec:['Menge verringern','Decrease quantity'], qtyInc:['Menge erhöhen','Increase quantity'], sizeX:['Größe {s}','Size {s}'],
+  orderT:['Bestellung {n} aufgenommen','Order {n} received'],
+  orderP:['Die Bestätigung geht an {m}. Lade deinen Brillenpass innerhalb von 14 Tagen in deinem Konto hoch.','A confirmation has been sent to {m}. Upload your prescription to your account within 14 days.'],
+
+  desT:['Designer und Marken','Designers and brands'],
+  desP:['Fünf Labels, ausgewählt nach Material, Verarbeitung und Tragekomfort. Wähle eine Marke, um ihre Modelle zu sehen.','Five labels, chosen for materials, craftsmanship and comfort. Choose a brand to see its frames.'],
+  viewModels:['Modelle ansehen','View frames'],
+  clT:['Kontaktlinsen','Contact lenses'],
+  clP:['Bestelle deine Linsen mit der Sehstärke aus deinem Kontaktlinsenpass nach.','Reorder your lenses using the power from your contact lens prescription.'],
+  power:['Sehstärke (dpt)','Power (D)'], dpt:['dpt','D'],
+  bandT:['Zum ersten Mal Kontaktlinsen?','New to contact lenses?'],
+  bandP:['Bei der kostenlosen Anpassung messen wir deine Hornhaut und du bekommst Probelinsen.','At a free fitting we measure your cornea and give you trial lenses.'],
+  bandBtn:['Anpassung buchen','Book a fitting'],
+  hT:['Hörakustik','Hearing care'],
+  hP:['In ausgewählten Filialen testen wir dein Gehör, beraten dich zu Hörgeräten und passen sie individuell an.','In selected stores we test your hearing, advise you on hearing aids and fit them individually.'],
+  h1t:['Kostenloser Hörtest','Free hearing test'], h1p:['In 20 Minuten weißt du, wie gut du hörst. Das Ergebnis besprechen wir direkt mit dir.','In 20 minutes you’ll know how well you hear. We discuss the result with you straight away.'],
+  h1m:['20 Minuten','20 minutes'], h1b:['Hörtest buchen','Book a hearing test'],
+  h2t:['Hörgeräte zuhause testen','Try hearing aids at home'], h2p:['Trage moderne Hörgeräte bis zu 14 Tage im Alltag, bevor du dich entscheidest.','Wear modern hearing aids for up to 14 days in everyday life before you decide.'],
+  h2m:['unverbindlich','no obligation'], h2b:['Beratung buchen','Book a consultation'], accessories:['Zubehör','Accessories'],
+  bT:['Beratung','Advice'], bP:['Finde heraus, welche Brillenform zu deinem Gesicht passt, und lies die Antworten auf die häufigsten Fragen.','Find out which frame shape suits your face and read answers to the most common questions.'],
+  advT:['Welche Form passt zu mir?','Which shape suits me?'], myFace:['Meine Gesichtsform','My face shape'],
+  fitShapes:['Passende Formen: {s}','Suitable shapes: {s}'], faceGo:['Passende Modelle ansehen','View matching frames'], faqT:['Häufige Fragen','Frequently asked questions'],
+
+  tT:['Termin buchen','Book an appointment'], tP:['Wähle Leistung, Filiale und Uhrzeit. Die Bestätigung bekommst du per E-Mail.','Choose a service, store and time. We’ll send you a confirmation by email.'],
+  bookBtn:['Termin buchen','Book appointment'],
+  service:['Leistung','Service'], store:['Filiale','Store'], chooseStore:['Filiale wählen','Choose a store'], date:['Datum','Date'], time:['Uhrzeit','Time'],
+  sundayClosed:['(sonntags geschlossen)','(closed on Sundays)'],
+  errStore:['Wähle eine Filiale.','Choose a store.'], errDate:['Wähle ein Datum.','Choose a date.'],
+  errSunday:['Sonntags sind die Filialen geschlossen. Wähle einen anderen Tag.','Our stores are closed on Sundays. Choose another day.'],
+  errSlot:['Wähle eine Uhrzeit.','Choose a time.'], errNameB:['Gib deinen Namen ein.','Enter your name.'], errMailB:['Gib eine gültige E-Mail-Adresse ein.','Enter a valid email address.'],
+  booked:['Termin gebucht','Appointment booked'],
+  bookedP:['{s} am {d} um {t} Uhr in der Filiale {st}. Die Bestätigung geht an {m}.','{s} on {d} at {t} at our {st} store. A confirmation has been sent to {m}.'],
+  again:['Weiteren Termin buchen','Book another appointment'], myAppts:['Deine Termine','Your appointments'],
+  apptLine:['{d}, {t} Uhr','{d}, {t}'], storeX:['Filiale {s}','{s} store'], bookedToast:['Termin gebucht.','Appointment booked.'],
+
+  sP:['Suche nach Stadt, Postleitzahl oder Straße und wähle eine Filiale, um alle Kontaktdaten zu sehen.','Search by city, postcode or street and choose a store to see all contact details.'],
+  sSearchPh:['Stadt, PLZ oder Straße','City, postcode or street'],
+  sLocate:['Meinen Standort verwenden','Use my location'], sHearOnly:['Nur mit Hörakustik','Hearing care only'],
+  sCount1:['{n} Filiale','{n} store'], sCountN:['{n} Filialen','{n} stores'],
+  sNear:['Filialen in der Nähe von {q}','Stores near {q}'], sNearYou:['Filialen in deiner Nähe','Stores near you'],
+  sNone:['Keine Filiale gefunden für „{q}“. Versuche eine Stadt oder Postleitzahl.','No store found for “{q}”. Try a city or postcode.'],
+  sSearching:['Suche läuft …','Searching …'],
+  sLocErr:['Dein Standort ist nicht verfügbar. Erlaube den Standortzugriff im Browser oder suche nach einer Stadt.','Your location is not available. Allow location access in your browser or search for a city.'],
+  sMapErr:['Die Karte konnte nicht geladen werden. Die Filialliste funktioniert trotzdem.','The map could not be loaded. The store list still works.'],
+  sBack:['Zurück zur Liste','Back to list'], sAddress:['Adresse','Address'], sPhone:['Telefon','Phone'], sContact:['Ansprechperson','Contact'],
+  sHours:['Öffnungszeiten','Opening hours'], sServices:['Leistungen','Services'], sBookHere:['Termin in dieser Filiale','Book at this store'], sRoute:['Route planen','Get directions'],
+  sOpen:['Jetzt geöffnet bis {t} Uhr','Open now until {t}'], sClosed:['Geschlossen','Closed'], sClosedOpens:['Geschlossen, öffnet {d} um {t} Uhr','Closed, opens {d} at {t}'],
+  sYou:['Du bist hier','You are here'], hWeek:['Montag bis Freitag','Monday to Friday'], hSat:['Samstag','Saturday'], hSun:['Sonntag','Sunday'], hClosed:['geschlossen','closed'],
+  today:['heute','today'], tomorrow:['morgen','tomorrow'],
+
+  f1:['Hilfe und Kontakt','Help and contact'], f2:['Impressum','Legal notice'], f3:['Datenschutz','Privacy'],
+  nlFootP:['Neue Kollektionen und Angebote einmal im Monat.','New collections and offers once a month.'],
+  nlFootSubbed:['Du bekommst den Newsletter an {m}.','You receive the newsletter at {m}.'], subscribe:['Abonnieren','Subscribe'],
+  legal:['© 2026 Klarsicht Optik. Prototyp: Produkte, Marken, Filialen und Kontaktdaten sind frei erfunden. Produktfotos: Unsplash.','© 2026 Klarsicht Optik. Prototype: products, brands, stores and contact details are fictional. Product photos: Unsplash.']
+};
+const li = () => lang==='de'?0:1;
+const loc = () => lang==='de'?'de-DE':'en-GB';
+function t(k,v={}){const e=T[k];let s=e?e[li()]:k;for(const x in v)s=s.split('{'+x+'}').join(v[x]);return s}
+const tr = x => Array.isArray(x)?x[li()]:x;   // übersetzt Datenfelder [de,en]
+
+/* =========================================================
+   Daten
+   ========================================================= */
+const SHAPES = {rund:['Rund','Round'], eckig:['Eckig','Rectangular'], panto:['Panto','Panto'], cateye:['Cat-Eye','Cat-eye'], pilot:['Pilot','Aviator'], oversize:['Oversize','Oversized']};
+const CATS = {Damen:['Damen','Women'], Herren:['Herren','Men'], Unisex:['Unisex','Unisex'], Kinder:['Kinder','Kids']};
+const MATS = {Acetat:['Acetat','Acetate'], Metall:['Metall','Metal'], Titan:['Titan','Titanium']};
+const TYPES = {Korrektion:['Korrektionsbrillen','Prescription glasses'], Sonnenbrille:['Sonnenbrillen','Sunglasses']};
+const TYPE_ONE = {Korrektion:['Korrektionsbrille','Prescription glasses'], Sonnenbrille:['Sonnenbrille','Sunglasses']};
+const C = {schwarz:[['Schwarz','Black'],'#1D1D1F'], havanna:[['Havanna','Havana'],'#6B3F1D'], gold:[['Gold','Gold'],'#B8913A'], silber:[['Silber','Silver'],'#9AA3A8']};
+const PRODUCTS = [
+  {id:'ella',  name:'Ella',   shape:'cateye',  material:'Acetat', cat:'Damen',  type:'Korrektion',   price:89,  pop:1, colors:[C.havanna,C.schwarz,[['Rosé','Rosé'],'#C48A86']]},
+  {id:'henrik',name:'Henrik', shape:'eckig',   material:'Acetat', cat:'Herren', type:'Korrektion',   price:79,  pop:2, colors:[C.schwarz,[['Dunkelblau','Navy'],'#1F3550'],C.havanna]},
+  {id:'mila',  name:'Mila',   shape:'rund',    material:'Metall', cat:'Unisex', type:'Korrektion',   price:99,  pop:3, colors:[C.gold,C.silber,[['Roségold','Rose gold'],'#B97A62']]},
+  {id:'theo',  name:'Theo',   shape:'panto',   material:'Acetat', cat:'Unisex', type:'Korrektion',   price:69,  pop:4, colors:[[['Honig','Honey'],'#C9962E'],[['Grau','Grey'],'#5F6A70'],[['Oliv','Olive'],'#5E6B3A']]},
+  {id:'juna',  name:'Juna',   shape:'oversize',material:'Acetat', cat:'Damen',  type:'Korrektion',   price:109, pop:6, colors:[[['Kristallrosa','Crystal pink'],'#D49AA0'],C.schwarz,C.havanna]},
+  {id:'konrad',name:'Konrad', shape:'eckig',   material:'Titan',  cat:'Herren', type:'Korrektion',   price:189, pop:9, colors:[[['Gunmetal','Gunmetal'],'#4A4F55'],C.silber]},
+  {id:'ava',   name:'Ava',    shape:'rund',    material:'Titan',  cat:'Damen',  type:'Korrektion',   price:169, pop:8, colors:[C.gold,[['Champagner','Champagne'],'#C8B08A']]},
+  {id:'lio',   name:'Lio',    shape:'panto',   material:'Acetat', cat:'Kinder', type:'Korrektion',   price:49,  pop:7, colors:[[['Blau','Blue'],'#2E6FB0'],[['Rot','Red'],'#B23A3A'],[['Grün','Green'],'#2E8B57']]},
+  {id:'nova',  name:'Nova',   shape:'pilot',   material:'Metall', cat:'Unisex', type:'Sonnenbrille', price:129, pop:5, colors:[C.gold,C.silber,C.schwarz]},
+  {id:'rosa',  name:'Rosa',   shape:'cateye',  material:'Acetat', cat:'Damen',  type:'Sonnenbrille', price:119, pop:10,colors:[C.schwarz,C.havanna,[['Bordeaux','Burgundy'],'#6E1F2E']]},
+  {id:'emil',  name:'Emil',   shape:'eckig',   material:'Acetat', cat:'Herren', type:'Sonnenbrille', price:99,  pop:11,colors:[C.schwarz,C.havanna]},
+  {id:'sol',   name:'Sol',    shape:'oversize',material:'Acetat', cat:'Unisex', type:'Sonnenbrille', price:139, pop:12,colors:[C.havanna,[['Sand','Sand'],'#C2A57A']]}
+];
+const BRANDS = [
+  {id:'nord', name:'Atelier Nord', origin:['Kopenhagen','Copenhagen'], style:'font-weight:500;letter-spacing:.06em', text:['Reduzierte Formen aus Titan und Edelstahl, besonders leicht auf der Nase.','Pared-back shapes in titanium and steel, especially light on the nose.']},
+  {id:'marlo',name:'Marlo Milano', origin:['Mailand','Milan'], style:'font-style:italic;font-weight:500', text:['Kräftiges Acetat in Handarbeit, mit einer Vorliebe für große Formen.','Bold handmade acetate with a love for large shapes.']},
+  {id:'haru', name:'Studio Haru', origin:['Sabae, Japan','Sabae, Japan'], style:'font-weight:400;letter-spacing:.02em', text:['Feine Titanfassungen mit präzisen Scharnieren, gefertigt in kleinen Serien.','Fine titanium frames with precise hinges, made in small batches.']},
+  {id:'berg', name:'Bergholz', origin:['Schwarzwald','Black Forest'], style:'font-weight:700;letter-spacing:-.04em', text:['Klassische Formen in gedeckten Farben, robust für jeden Tag.','Classic shapes in muted colours, built for every day.']},
+  {id:'kids', name:'Klarsicht Kids', origin:['Eigenmarke','House brand'], style:'font-weight:700', text:['Bruchfeste Kinderfassungen mit flexiblen Bügeln und kräftigen Farben.','Unbreakable kids’ frames with flexible temples and bright colours.']}
+];
+const BRAND_OF = {ella:'marlo',henrik:'berg',mila:'nord',theo:'berg',juna:'marlo',konrad:'haru',ava:'haru',lio:'kids',nova:'nord',rosa:'marlo',emil:'berg',sol:'marlo'};
+PRODUCTS.forEach(p=>p.brand=BRAND_OF[p.id]);
+const IMG={"ella": "1603578119639-798b8413d8d7", "henrik": "1573075425067-8a191172aff6", "mila": "1551910147-371009214918", "theo": "1646084081219-1090f72a531c", "juna": "1646083774155-2a40b675641d", "konrad": "1551910021-c59ed3bf006b", "ava": "1614715838608-dd527c46231d", "lio": "1552574023-e7095f12d660", "nova": "1567473810954-507d59716c25", "rosa": "1584036553516-bf83210aa16c", "emil": "1611222777277-61319d63ca94", "sol": "1577803645773-f96470509666"};
+const photoUrl=(p,w=800)=>`https://images.unsplash.com/photo-${IMG[p.id]}?auto=format&fit=crop&w=${w}&h=${Math.round(w*.75)}&q=70`;
+function photoTag(p,w,cls=''){return `<img class="pimg ${cls}" src="${photoUrl(p,w)}" alt="${p.name}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'pimg-fb',innerHTML:frameSVG(byId('${p.id}'),'${p.colors[0][1]}')}))">`}
+const brandName = id => (BRANDS.find(b=>b.id===id)||{}).name||'';
+const SIZES = [{id:'S',sub:'48 □ 19'},{id:'M',sub:'51 □ 19'},{id:'L',sub:'54 □ 18'}];
+const LENSES = {
+  Korrektion:[{id:'single',label:['Einstärkengläser','Single-vision lenses'],price:0},{id:'vari',label:['Gleitsichtgläser','Varifocal lenses'],price:149},{id:'plain',label:['Ohne Sehstärke','Non-prescription'],price:0}],
+  Sonnenbrille:[{id:'uv',label:['UV400-Gläser','UV400 lenses'],price:0},{id:'pol',label:['Polarisiert','Polarised'],price:40},{id:'rx',label:['Mit Sehstärke','With prescription'],price:79}]
+};
+const EXTRAS = {
+  Korrektion:[{id:'ar',label:['Superentspiegelung','Premium anti-reflective'],price:29},{id:'blue',label:['Blaulichtfilter','Blue light filter'],price:39},{id:'photo',label:['Selbsttönend','Photochromic'],price:59}],
+  Sonnenbrille:[{id:'mirror',label:['Verspiegelt','Mirrored'],price:25},{id:'case',label:['Hartschalen-Etui','Hard case'],price:15}]
+};
+const CL = [
+  {id:'cl-day',   name:['Tageslinsen Comfort','Comfort daily lenses'], pack:['30 Stück pro Packung','30 lenses per box'], price:24.95, power:true, text:['Jeden Tag ein frisches Paar, ohne Pflegemittel.','A fresh pair every day, no solution needed.']},
+  {id:'cl-day-si',name:['Tageslinsen Silikon-Hydrogel','Silicone hydrogel daily lenses'], pack:['30 Stück pro Packung','30 lenses per box'], price:34.95, power:true, text:['Mehr Sauerstoff für die Hornhaut, angenehm bei langen Bildschirmtagen.','More oxygen for your cornea, comfortable on long screen days.']},
+  {id:'cl-month', name:['Monatslinsen','Monthly lenses'], pack:['6 Stück pro Packung','6 lenses per box'], price:39.95, power:true, text:['Ein Paar hält 30 Tage und ist im Dauergebrauch günstig.','One pair lasts 30 days and is affordable for daily wear.']},
+  {id:'cl-toric', name:['Torische Monatslinsen','Toric monthly lenses'], pack:['6 Stück pro Packung','6 lenses per box'], price:49.95, power:true, text:['Für Hornhautverkrümmung, mit stabiler Ausrichtung im Auge.','For astigmatism, with stable alignment on the eye.']},
+  {id:'cl-care',  name:['All-in-One Pflegemittel','All-in-one solution'], pack:['360 ml mit Linsenbehälter','360 ml with lens case'], price:12.95, power:false, text:['Reinigt, desinfiziert und spült Monatslinsen in einem Schritt.','Cleans, disinfects and rinses monthly lenses in one step.']}
+];
+const HEAR = [
+  {id:'h-bat',  name:['Hörgerätebatterien Größe 312','Hearing aid batteries size 312'], pack:['60 Stück','60 pieces'], price:19.95, text:['Passend für die meisten Hinter-dem-Ohr-Geräte.','Fits most behind-the-ear devices.']},
+  {id:'h-clean',name:['Reinigungsset für Hörgeräte','Hearing aid cleaning kit'], pack:['Spray, Bürste und Tücher','Spray, brush and wipes'], price:14.95, text:['Entfernt Ohrenschmalz und Feuchtigkeit schonend.','Gently removes earwax and moisture.']},
+  {id:'h-dry',  name:['Trockenbox','Drying box'], pack:['mit 4 Trockenkapseln','with 4 drying capsules'], price:24.95, text:['Entzieht Hörgeräten über Nacht die Feuchtigkeit.','Draws moisture out of hearing aids overnight.']}
+];
+const FACES = {
+  oval:{label:['Oval','Oval'], shapes:['eckig','pilot','oversize','rund'], text:['Ein ovales Gesicht ist ausgewogen, fast jede Form passt. Breite, eckige Fassungen setzen einen klaren Akzent.','An oval face is balanced, so almost any shape works. Wide rectangular frames make a clear statement.']},
+  rund:{label:['Rund','Round'], shapes:['eckig','cateye'], text:['Kantige und nach oben gezogene Formen strecken ein rundes Gesicht optisch.','Angular and upswept shapes make a round face look longer.']},
+  eckig:{label:['Eckig','Square'], shapes:['rund','panto','pilot'], text:['Runde und weiche Formen gleichen markante Wangenknochen und ein kräftiges Kinn aus.','Round, soft shapes balance strong cheekbones and a defined jaw.']},
+  herz:{label:['Herzförmig','Heart-shaped'], shapes:['panto','rund','pilot'], text:['Formen, die unten etwas breiter sind, gleichen eine breite Stirn und ein schmales Kinn aus.','Shapes that are slightly wider at the bottom balance a broad forehead and narrow chin.']}
+};
+const FAQ = [
+  [['Wie gebe ich meine Sehwerte an?','How do I add my prescription?'],['Du kannst deinen Brillenpass nach der Bestellung im Kundenkonto hochladen oder die Werte abtippen. Dafür hast du 14 Tage Zeit. Erst danach fertigen wir die Gläser.','After ordering, upload your prescription in your account or type in the values. You have 14 days. We only make the lenses after that.']],
+  [['Welche Größe brauche ich?','Which size do I need?'],['Die Zahlen auf der Innenseite deiner jetzigen Brille, zum Beispiel 51 □ 19, stehen für Glasbreite und Stegbreite in Millimetern. Wähle die Größe, die diesen Werten am nächsten kommt.','The numbers inside your current glasses, for example 51 □ 19, are lens width and bridge width in millimetres. Choose the size closest to these values.']],
+  [['Was ist der Unterschied zwischen Einstärken- und Gleitsichtgläsern?','What is the difference between single-vision and varifocal lenses?'],['Einstärkengläser korrigieren eine Sehentfernung, also nah oder fern. Gleitsichtgläser haben fließende Zonen für Ferne, Zwischenbereich und Nähe in einem Glas.','Single-vision lenses correct one distance, near or far. Varifocals blend zones for distance, intermediate and near in one lens.']],
+  [['Wie lange dauert die Lieferung?','How long does delivery take?'],['Brillen ohne Sehstärke versenden wir in 2 bis 3 Werktagen. Mit Sehstärke dauert es etwa 7 bis 10 Werktage, weil die Gläser für dich gefertigt werden.','Non-prescription glasses ship in 2 to 3 working days. With a prescription it takes about 7 to 10 working days because the lenses are made for you.']],
+  [['Kann ich die Brille zurückgeben?','Can I return my glasses?'],['Ja, innerhalb von 30 Tagen kostenlos per Post oder in jeder Filiale.','Yes, within 30 days, free by post or in any store.']]
+];
+const SERVICES = [
+  {id:'seh',label:['Sehtest','Eye test'],dur:['20 Min.','20 min']},
+  {id:'cl',label:['Kontaktlinsen-Anpassung','Contact lens fitting'],dur:['30 Min.','30 min']},
+  {id:'hoer',label:['Hörtest','Hearing test'],dur:['20 Min.','20 min']},
+  {id:'service',label:['Brillen-Service','Glasses service'],dur:['10 Min.','10 min']}
+];
+const SLOTS = ['09:00','09:30','10:30','11:00','12:30','14:00','15:30','16:00','17:30'];
+
+/* Filialen – alle Kontaktdaten frei erfunden */
+const ROLES = {lead:['Filialleitung','Store manager'], master:['Augenoptikmeisterin','Master optician'], masterM:['Augenoptikmeister','Master optician'], hear:['Hörakustikerin','Hearing care specialist']};
+const HOURS = {std:{wk:['09:00','19:00'],sat:['09:00','18:00']}, city:{wk:['10:00','20:00'],sat:['10:00','20:00']}};
+const STORES = [
+  {id:'ber-mitte', name:'Berlin Mitte', street:'Rosenthaler Straße 40', zip:'10178', city:'Berlin', lat:52.5262, lng:13.4021, phone:'+49 30 5550 1401', contact:'Lena Hoffmann', role:'lead', hours:'city', hearing:true},
+  {id:'ber-charl', name:'Berlin Charlottenburg', street:'Wilmersdorfer Straße 62', zip:'10627', city:'Berlin', lat:52.5079, lng:13.3036, phone:'+49 30 5550 1402', contact:'Murat Yilmaz', role:'masterM', hours:'std', hearing:false},
+  {id:'ham-altona', name:'Hamburg Altona', street:'Ottenser Hauptstraße 18', zip:'22765', city:'Hamburg', lat:53.5527, lng:9.9311, phone:'+49 40 5550 2201', contact:'Jana Petersen', role:'lead', hours:'std', hearing:true},
+  {id:'ham-city', name:'Hamburg Innenstadt', street:'Spitalerstraße 9', zip:'20095', city:'Hamburg', lat:53.5512, lng:10.0006, phone:'+49 40 5550 2202', contact:'Tobias Krüger', role:'masterM', hours:'city', hearing:false},
+  {id:'muc-schwabing', name:'München Schwabing', street:'Leopoldstraße 51', zip:'80802', city:'München', alias:'munich', lat:48.1600, lng:11.5856, phone:'+49 89 5550 3301', contact:'Sophie Bauer', role:'master', hours:'std', hearing:true},
+  {id:'muc-zentrum', name:'München Zentrum', street:'Sendlinger Straße 24', zip:'80331', city:'München', alias:'munich', lat:48.1350, lng:11.5703, phone:'+49 89 5550 3302', contact:'Florian Huber', role:'lead', hours:'city', hearing:false},
+  {id:'koe-ehrenfeld', name:'Köln Ehrenfeld', street:'Venloer Straße 300', zip:'50823', city:'Köln', alias:'cologne', lat:50.9500, lng:6.9220, phone:'+49 221 5550 4401', contact:'Aylin Demir', role:'hear', hours:'std', hearing:true},
+  {id:'fra-bornheim', name:'Frankfurt Bornheim', street:'Berger Straße 180', zip:'60385', city:'Frankfurt am Main', lat:50.1260, lng:8.7080, phone:'+49 69 5550 5501', contact:'Daniel Weber', role:'lead', hours:'std', hearing:false},
+  {id:'stu-mitte', name:'Stuttgart Mitte', street:'Königstraße 33', zip:'70173', city:'Stuttgart', lat:48.7790, lng:9.1770, phone:'+49 711 5550 6601', contact:'Katharina Schmid', role:'master', hours:'city', hearing:true},
+  {id:'dus-altstadt', name:'Düsseldorf Altstadt', street:'Schadowstraße 45', zip:'40212', city:'Düsseldorf', lat:51.2265, lng:6.7840, phone:'+49 211 5550 7701', contact:'Jonas Becker', role:'lead', hours:'city', hearing:false},
+  {id:'lei-zentrum', name:'Leipzig Zentrum', street:'Petersstraße 20', zip:'04109', city:'Leipzig', lat:51.3384, lng:12.3747, phone:'+49 341 5550 8801', contact:'Marie Wagner', role:'master', hours:'std', hearing:false},
+  {id:'dre-neustadt', name:'Dresden Neustadt', street:'Hauptstraße 12', zip:'01097', city:'Dresden', lat:51.0592, lng:13.7420, phone:'+49 351 5550 9901', contact:'Paul Richter', role:'lead', hours:'std', hearing:true},
+  {id:'nue-altstadt', name:'Nürnberg Altstadt', street:'Karolinenstraße 30', zip:'90402', city:'Nürnberg', alias:'nuremberg', lat:49.4510, lng:11.0750, phone:'+49 911 5550 1101', contact:'Elif Kaya', role:'master', hours:'std', hearing:false},
+  {id:'han-mitte', name:'Hannover Mitte', street:'Georgstraße 20', zip:'30159', city:'Hannover', alias:'hanover', lat:52.3740, lng:9.7380, phone:'+49 511 5550 1201', contact:'Niklas Schulz', role:'lead', hours:'std', hearing:true},
+  {id:'wien-mariahilf', name:'Wien Mariahilf', street:'Mariahilfer Straße 70', zip:'1070', city:'Wien', alias:'vienna', lat:48.1980, lng:16.3490, phone:'+43 1 5550 1301', contact:'Anna Gruber', role:'hear', hours:'std', hearing:true}
+];
+STORES.forEach(s=>s.email=s.id+'@klarsicht.example');
+const storeById = id => STORES.find(s=>s.id===id);
+
+/* =========================================================
+   Brillen-Illustration (SVG)
+   ========================================================= */
+const LENS = {
+  rund:'<circle cx="55" cy="40" r="29"/>',
+  eckig:'<rect x="22" y="21" width="66" height="40" rx="7"/>',
+  panto:'<path d="M24 27 Q27 18 56 18 Q86 18 87 29 Q88 57 59 63 Q27 66 24 43 Z"/>',
+  cateye:'<path d="M17 18 Q54 15 88 24 Q90 52 62 62 Q30 66 23 45 Q18 32 17 18 Z"/>',
+  pilot:'<path d="M21 22 Q55 15 88 22 Q90 49 67 61 Q47 70 30 57 Q20 45 21 22 Z"/>',
+  oversize:'<rect x="15" y="14" width="75" height="54" rx="20"/>'
+};
+function frameSVG(p,color,size){
+  const metal=p.material!=='Acetat', sun=p.type==='Sonnenbrille', sw=metal?2.8:5.5;
+  const tint=sun?'rgba(22,30,36,.74)':'rgba(170,205,215,.16)', l=LENS[p.shape];
+  const dims=size?`width="${size}" height="${size*0.4}"`:'';
+  return `<svg viewBox="0 0 200 80" ${dims} xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g fill="${tint}" stroke="${color}" stroke-width="${sw}" stroke-linejoin="round">${l}<g transform="translate(200 0) scale(-1 1)">${l}</g></g>
+    <path d="M86 33 Q100 24 114 33" fill="none" stroke="${color}" stroke-width="${sw*0.85}" stroke-linecap="round"/>
+    <path d="M17 28 L3 27 M183 28 L197 27" stroke="${color}" stroke-width="${sw}" stroke-linecap="round"/>
+    <path d="M36 31 Q41 25 49 24 M151 24 Q159 25 164 31" fill="none" stroke="rgba(255,255,255,${sun?.35:.55})" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>`;
+}
+
+/* =========================================================
+   Helfer
+   ========================================================= */
+const $ = (s,r=document)=>r.querySelector(s);
+const eur = n => n.toLocaleString(loc(),{style:'currency',currency:'EUR',minimumFractionDigits:n%1?2:0,maximumFractionDigits:2});
+const byId = id => PRODUCTS.find(p=>p.id===id);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mailOk = m => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(m);
+let toastTimer;
+function toast(msg){const e=$('#toast');e.textContent=msg;e.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),2800)}
+
+/* =========================================================
+   Sprache
+   ========================================================= */
+function applyStatic(){
+  document.documentElement.lang=lang; document.title=t('docTitle');
+  document.querySelectorAll('[data-i18n]').forEach(e=>e.textContent=t(e.dataset.i18n));
+  document.querySelectorAll('[data-i18n-html]').forEach(e=>e.innerHTML=t(e.dataset.i18nHtml));
+  document.querySelectorAll('[data-i18n-ph]').forEach(e=>e.placeholder=t(e.dataset.i18nPh));
+  document.querySelectorAll('[data-i18n-aria]').forEach(e=>e.setAttribute('aria-label',t(e.dataset.i18nAria)));
+  document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===lang));
+  $('#toPhoto').alt=t('photoAlt');
+}
+function setLang(l){
+  lang=l; applyStatic();
+  document.querySelectorAll('.err').forEach(e=>e.textContent='');
+  syncFilterUI(); renderGrid(); renderHero(false); renderCart(); renderBrands(); renderCL(); renderHear();
+  renderFace(); renderFaq(); renderBooking(); renderStores(); updateFootNewsletter();
+  if($('#pdDialog').open) renderDetail();
+  renderTryOn(); $('#toCam').textContent=t(to.stream?'camStop':'camStart'); setMsg(to.msgKey,to.msgErr);
+  if(!$('#bkConfirm').hidden&&lastBooking) showBookingConfirm(lastBooking);
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-lang]');if(b&&b.dataset.lang!==lang)setLang(b.dataset.lang)});
+
+/* =========================================================
+   Konto & Newsletter
+   ========================================================= */
+const users=[]; let currentUser=null;
+function setTab(tab){
+  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab));
+  $('#registerForm').hidden=tab!=='register'; $('#loginForm').hidden=tab!=='login';
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+$('#registerForm').onsubmit=e=>{
+  e.preventDefault();
+  const f={first:$('#rFirst').value.trim(),last:$('#rLast').value.trim(),mail:$('#rMail').value.trim().toLowerCase(),pass:$('#rPass').value};
+  const err=$('#regErr'); ['#rFirst','#rLast','#rMail','#rPass'].forEach(s=>$(s).removeAttribute('aria-invalid'));
+  const bad=(k,sel)=>{err.textContent=t(k);if(sel)$(sel).setAttribute('aria-invalid','true')};
+  if(!f.first||!f.last) return bad('errName',!f.first?'#rFirst':'#rLast');
+  if(!mailOk(f.mail)) return bad('errMail','#rMail');
+  if(f.pass.length<8) return bad('errPass','#rPass');
+  if(!$('#rTerms').checked) return bad('errTerms');
+  if(users.some(u=>u.mail===f.mail)) return bad('errExists');
+  err.textContent=''; currentUser={...f,newsletter:false,interests:[]}; users.push(currentUser);
+  $('#authStep').hidden=true; $('#newsletterStep').hidden=false; $('#nlYes').focus();
+};
+$('#loginForm').onsubmit=e=>{
+  e.preventDefault();
+  const u=users.find(u=>u.mail===$('#lMail').value.trim().toLowerCase()&&u.pass===$('#lPass').value);
+  if(!u){$('#logErr').textContent=t('errLogin');return}
+  currentUser=u; enterShop(t('welcomeBack',{n:u.first}));
+};
+$('#nlYes').onclick=()=>{
+  currentUser.newsletter=true;
+  currentUser.interests=[...document.querySelectorAll('#newsletterStep input:checked')].map(i=>i.value);
+  enterShop(t('nlConfirm',{m:currentUser.mail}));
+};
+$('#nlNo').onclick=()=>enterShop(t('welcome',{n:currentUser.first}));
+function enterShop(msg){
+  $('#authOverlay').hidden=true; document.body.classList.remove('locked');
+  $('#accountName').textContent=currentUser.first; updateFootNewsletter(); renderBooking(); toast(msg);
+}
+function showAuth(){
+  $('#authStep').hidden=false; $('#newsletterStep').hidden=true;
+  document.querySelectorAll('#authPanel form').forEach(f=>f.reset());
+  document.querySelectorAll('.err').forEach(e=>e.textContent='');
+  $('#authOverlay').hidden=false; document.body.classList.add('locked'); setTab('login');
+}
+$('#accountBtn').onclick=()=>{
+  if(!currentUser){showAuth();return}
+  if(confirm(t('logoutQ',{n:currentUser.first+' '+currentUser.last,m:currentUser.mail}))){
+    currentUser=null; $('#accountName').textContent=''; cart.length=0; renderCart(); updateFootNewsletter();
+    if(REQUIRE_LOGIN) showAuth();
+  }
+};
+function updateFootNewsletter(){
+  const subbed=currentUser&&currentUser.newsletter;
+  $('#nlFoot').hidden=subbed;
+  $('#nlFootText').textContent=subbed?t('nlFootSubbed',{m:currentUser.mail}):t('nlFootP');
+  if(currentUser&&!subbed&&!$('#nlMail').value) $('#nlMail').value=currentUser.mail;
+}
+$('#nlFoot').onsubmit=e=>{
+  e.preventDefault(); const m=$('#nlMail').value.trim();
+  if(!mailOk(m)){toast(t('errMailB'));return}
+  if(currentUser) currentUser.newsletter=true;
+  updateFootNewsletter(); toast(t('nlConfirm',{m}));
+};
+if(!REQUIRE_LOGIN){$('#authOverlay').hidden=true;document.body.classList.remove('locked')}
+
+/* =========================================================
+   Startseite: Formen-Spiegel
+   ========================================================= */
+let heroShape='rund';
+const heroSample={rund:'mila',eckig:'henrik',panto:'theo',cateye:'ella',pilot:'nova',oversize:'juna'};
+function renderHero(animate){
+  $('#shapePicker').innerHTML=Object.keys(SHAPES).map(k=>`<button data-shape="${k}" aria-pressed="${k===heroShape}">${tr(SHAPES[k])}</button>`).join('');
+  const p=byId(heroSample[heroShape]), el=$('#heroFrame');
+  const draw=()=>{el.innerHTML=photoTag(p,900);el.classList.remove('swap')};
+  if(animate){el.classList.add('swap');setTimeout(draw,180)}else draw();
+  $('#shapeLink').textContent=t('shapeLink',{s:tr(SHAPES[heroShape])});
+}
+$('#shapePicker').onclick=e=>{const b=e.target.closest('button');if(b){heroShape=b.dataset.shape;renderHero(true)}};
+$('#shapeLink').onclick=()=>showCollection(()=>filters.shapes.add(heroShape));
+$('#heroShop').onclick=()=>goCollection();
+$('#heroTry').onclick=()=>openTryOn('mila',0);
+function goCollection(){$('#collection').scrollIntoView()}
+
+/* =========================================================
+   Katalog & Filter
+   ========================================================= */
+const filters={type:'Alle',cat:'Alle',shapes:new Set(),materials:new Set(),max:200,sort:'pop',q:'',brand:''};
+const cardColor={};
+function resetFilters(){Object.assign(filters,{type:'Alle',cat:'Alle',max:200,sort:'pop',q:'',brand:''});filters.shapes.clear();filters.materials.clear();$('#q').value=''}
+const radioGroup=(el,name,opts,cur)=>el.innerHTML=opts.map(([v,l])=>`<label><input type="radio" name="${name}" value="${v}" ${v===cur?'checked':''}> ${l}</label>`).join('');
+const checkGroup=(el,map,set)=>el.innerHTML=Object.keys(map).map(v=>`<label><input type="checkbox" value="${v}" ${set.has(v)?'checked':''}> ${tr(map[v])}</label>`).join('');
+function syncFilterUI(){
+  radioGroup($('#fType'),'type',[['Alle',t('all')],...Object.keys(TYPES).map(k=>[k,tr(TYPES[k])])],filters.type);
+  radioGroup($('#fCat'),'cat',[['Alle',t('all')],...Object.keys(CATS).map(k=>[k,tr(CATS[k])])],filters.cat);
+  checkGroup($('#fShape'),SHAPES,filters.shapes);
+  checkGroup($('#fMat'),MATS,filters.materials);
+  $('#fPrice').value=filters.max; $('#fPriceVal').textContent=eur(filters.max);
+  $('#fSort').innerHTML=[['pop','sortPop'],['asc','sortAsc'],['desc','sortDesc'],['name','sortName']].map(([v,k])=>`<option value="${v}">${t(k)}</option>`).join('');
+  $('#fSort').value=filters.sort;
+}
+$('#fType').onchange=e=>{filters.type=e.target.value;renderGrid()};
+$('#fCat').onchange=e=>{filters.cat=e.target.value;renderGrid()};
+$('#fShape').onchange=e=>{e.target.checked?filters.shapes.add(e.target.value):filters.shapes.delete(e.target.value);renderGrid()};
+$('#fMat').onchange=e=>{e.target.checked?filters.materials.add(e.target.value):filters.materials.delete(e.target.value);renderGrid()};
+$('#fPrice').oninput=e=>{filters.max=+e.target.value;$('#fPriceVal').textContent=eur(filters.max);renderGrid()};
+$('#fSort').onchange=e=>{filters.sort=e.target.value;renderGrid()};
+$('#fReset').onclick=()=>{resetFilters();syncFilterUI();renderGrid()};
+$('#q').oninput=e=>{filters.q=e.target.value.trim().toLowerCase();if(currentRoute()&&!['brillen','sonnenbrillen'].includes(currentRoute()))navigate('');renderGrid()};
+$('#q').onkeydown=e=>{if(e.key==='Enter')goCollection()};
+
+function renderGrid(){
+  const f=filters, q=f.q;
+  const match=p=>!q||[p.name,brandName(p.brand),...SHAPES[p.shape],...MATS[p.material]].some(x=>x.toLowerCase().includes(q));
+  let list=PRODUCTS.filter(p=>(f.type==='Alle'||p.type===f.type)&&(f.cat==='Alle'||p.cat===f.cat)&&(!f.brand||p.brand===f.brand)
+    &&(!f.shapes.size||f.shapes.has(p.shape))&&(!f.materials.size||f.materials.has(p.material))&&p.price<=f.max&&match(p));
+  list.sort({pop:(a,b)=>a.pop-b.pop,asc:(a,b)=>a.price-b.price,desc:(a,b)=>b.price-a.price,name:(a,b)=>a.name.localeCompare(b.name)}[f.sort]);
+  $('#collTitle').textContent=f.brand?brandName(f.brand):f.cat==='Kinder'?t('kidsTitle'):f.type!=='Alle'?tr(TYPES[f.type]):t('allModels');
+  $('#resultCount').textContent=t(list.length===1?'count1':'countN',{n:list.length});
+  $('#grid').innerHTML=list.length?list.map(cardHTML).join(''):
+    `<div class="empty"><h3>${t('emptyT')}</h3><p>${t('emptyP')}</p><button class="btn btn-ghost btn-small" onclick="document.getElementById('fReset').click()">${t('reset')}</button></div>`;
+}
+function cardHTML(p){
+  const ci=cardColor[p.id]||0;
+  const badge=p.type==='Sonnenbrille'?`<span class="badge sun">${t('badgeSun')}</span>`:p.cat==='Kinder'?`<span class="badge">${t('badgeKids')}</span>`:'';
+  return `<article class="card" data-id="${p.id}">
+    <button class="shot" data-act="detail" aria-label="${t('viewX',{n:p.name})}">${badge}${photoTag(p,600)}</button>
+    <div class="body">
+      <div class="top"><h3>${p.name}</h3><span class="price">${t('from',{p:eur(p.price)})}</span></div>
+      <p class="meta">${brandName(p.brand)}, ${tr(SHAPES[p.shape])}, ${tr(MATS[p.material])}</p>
+      <div class="dots">${p.colors.map((c,i)=>`<button class="dot" data-act="color" data-i="${i}" style="background:${c[1]}" aria-label="${t('colorX',{c:tr(c[0])})}" aria-pressed="${i===ci}"></button>`).join('')}</div>
+      <div class="actions">
+        <button class="btn btn-primary btn-small" data-act="detail">${t('configure')}</button>
+        <button class="btn btn-ghost btn-small" data-act="try">${t('tryon')}</button>
+      </div>
+    </div>
+  </article>`;
+}
+$('#grid').onclick=e=>{
+  const b=e.target.closest('[data-act]'); if(!b) return;
+  const id=b.closest('.card').dataset.id;
+  if(b.dataset.act==='color'){cardColor[id]=+b.dataset.i;renderGrid();return}
+  if(b.dataset.act==='detail') openDetail(id,cardColor[id]||0);
+  if(b.dataset.act==='try') openTryOn(id,cardColor[id]||0);
+};
+
+/* =========================================================
+   Produktdetail / Konfigurator
+   ========================================================= */
+let cfg=null;
+function openDetail(id,ci){const p=byId(id);cfg={id,ci,size:'M',lens:LENSES[p.type][0].id,extras:new Set()};renderDetail();$('#pdDialog').showModal()}
+function priceOf(c){
+  const p=byId(c.id);
+  return p.price+LENSES[p.type].find(x=>x.id===c.lens).price+EXTRAS[p.type].filter(x=>c.extras.has(x.id)).reduce((s,x)=>s+x.price,0);
+}
+function renderDetail(){
+  const p=byId(cfg.id), c=p.colors[cfg.ci];
+  $('#pdStage').innerHTML=photoTag(p,1000);
+  $('#pdName').textContent=p.name;
+  $('#pdMeta').textContent=t('pdMeta',{type:tr(TYPE_ONE[p.type]),shape:tr(SHAPES[p.shape]),mat:tr(MATS[p.material]),cat:tr(CATS[p.cat])})+'. '+brandName(p.brand);
+  $('#pdColorName').textContent=tr(c[0]);
+  $('#pdColors').innerHTML=p.colors.map((x,i)=>`<button class="dot" data-i="${i}" style="background:${x[1]}" aria-label="${t('colorX',{c:tr(x[0])})}" aria-pressed="${i===cfg.ci}"></button>`).join('');
+  $('#pdSizes').innerHTML=SIZES.map(s=>`<button class="pill" data-v="${s.id}" aria-pressed="${s.id===cfg.size}">${s.id}<small>${s.sub}</small></button>`).join('');
+  $('#pdLens').innerHTML=LENSES[p.type].map(l=>`<button class="pill" data-v="${l.id}" aria-pressed="${l.id===cfg.lens}">${tr(l.label)}<small>${l.price?'+ '+eur(l.price):t('included')}</small></button>`).join('');
+  $('#pdExtras').innerHTML=EXTRAS[p.type].map(x=>`<button class="pill" data-v="${x.id}" aria-pressed="${cfg.extras.has(x.id)}">${tr(x.label)}<small>+ ${eur(x.price)}</small></button>`).join('');
+  $('#pdTotal').textContent=eur(priceOf(cfg));
+}
+$('#pdColors').onclick=e=>{const b=e.target.closest('button');if(b){cfg.ci=+b.dataset.i;renderDetail()}};
+$('#pdSizes').onclick=e=>{const b=e.target.closest('button');if(b){cfg.size=b.dataset.v;renderDetail()}};
+$('#pdLens').onclick=e=>{const b=e.target.closest('button');if(b){cfg.lens=b.dataset.v;renderDetail()}};
+$('#pdExtras').onclick=e=>{const b=e.target.closest('button');if(!b)return;const v=b.dataset.v;cfg.extras.has(v)?cfg.extras.delete(v):cfg.extras.add(v);renderDetail()};
+$('#pdAdd').onclick=()=>{addFrame(cfg);$('#pdDialog').close();openCart()};
+$('#pdTry').onclick=()=>{$('#pdDialog').close();openTryOn(cfg.id,cfg.ci)};
+
+/* =========================================================
+   Warenkorb
+   ========================================================= */
+const cart=[];
+function addFrame(c){
+  const key=['f',c.id,c.ci,c.size,c.lens,[...c.extras].sort().join('+')].join('|'), ex=cart.find(i=>i.key===key);
+  if(ex) ex.qty++; else cart.push({key,kind:'frame',id:c.id,ci:c.ci,size:c.size,lens:c.lens,extras:[...c.extras],price:priceOf(c),qty:1});
+  renderCart(); toast(t('inCart',{n:byId(c.id).name}));
+}
+function addSimple(ref,power){
+  const key=['s',ref,power||''].join('|'), ex=cart.find(i=>i.key===key);
+  if(ex) ex.qty++; else cart.push({key,kind:'simple',ref,power,qty:1});
+  renderCart(); toast(t('inCart',{n:tr(simpleItem(ref).name)}));
+}
+const simpleItem=ref=>CL.find(x=>x.id===ref)||HEAR.find(x=>x.id===ref);
+const itemPrice=i=>i.kind==='frame'?i.price:simpleItem(i.ref).price;
+function simpleIcon(ref){
+  return ref.startsWith('cl')
+    ?'<svg viewBox="0 0 80 40" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"><path d="M12 30 Q40 0 68 30"/><ellipse cx="40" cy="30" rx="28" ry="5"/></svg>'
+    :'<svg viewBox="0 0 80 40" fill="none" stroke="var(--accent)" stroke-width="3"><circle cx="40" cy="20" r="14"/><path d="M34 20h12M40 14v12" stroke-linecap="round"/></svg>';
+}
+function renderCart(){
+  $('#cartCount').textContent=cart.reduce((s,i)=>s+i.qty,0);
+  if(!cart.length){
+    $('#cartBody').innerHTML=`<div class="drawer-empty"><p>${t('cartEmpty')}</p><p style="margin-top:12px"><button class="btn btn-primary btn-small" id="emptyShop">${t('heroShop')}</button></p></div>`;
+    $('#cartFoot').innerHTML=''; $('#emptyShop').onclick=()=>{closeCart();showCollection(()=>{})}; return;
+  }
+  const qty=idx=>`<div class="qty"><button data-q="-1" data-i="${idx}" aria-label="${t('qtyDec')}">−</button><span>${cart[idx].qty}</span><button data-q="1" data-i="${idx}" aria-label="${t('qtyInc')}">+</button></div><button class="rm" data-rm="${idx}">${t('remove')}</button>`;
+  $('#cartBody').innerHTML=cart.map((i,idx)=>{
+    if(i.kind==='simple'){const s=simpleItem(i.ref);
+      return `<div class="ci"><div class="thumb">${simpleIcon(i.ref)}</div><div><h3>${tr(s.name)}</h3><p>${tr(s.pack)}${i.power?`, ${fmtPower(i.power)} ${t('dpt')}`:''}</p>${qty(idx)}</div><strong>${eur(s.price*i.qty)}</strong></div>`}
+    const p=byId(i.id), lens=LENSES[p.type].find(l=>l.id===i.lens), ex=EXTRAS[p.type].filter(x=>i.extras.includes(x.id)).map(x=>tr(x.label));
+    return `<div class="ci"><div class="thumb photo">${photoTag(p,200)}</div>
+      <div><h3>${p.name}</h3><p>${tr(p.colors[i.ci][0])}, ${t('sizeX',{s:i.size})}</p><p>${[tr(lens.label),...ex].join(', ')}</p>${qty(idx)}</div>
+      <strong>${eur(i.price*i.qty)}</strong></div>`}).join('');
+  const sub=cart.reduce((s,i)=>s+itemPrice(i)*i.qty,0), ship=sub>=59?0:4.95;
+  $('#cartFoot').innerHTML=`<div class="line"><span>${t('subtotal')}</span><span>${eur(sub)}</span></div>
+    <div class="line"><span>${t('shipping')}</span><span>${ship?eur(ship):t('free')}</span></div>
+    <div class="line sum"><span>${t('sum')}</span><span>${eur(sub+ship)}</span></div>
+    <button class="btn btn-primary" id="checkout">${t('checkout')}</button>`;
+  $('#checkout').onclick=checkout;
+}
+$('#cartBody').onclick=e=>{
+  const q=e.target.closest('[data-q]'), r=e.target.closest('[data-rm]');
+  if(q){const it=cart[+q.dataset.i];it.qty+=+q.dataset.q;if(it.qty<1)cart.splice(+q.dataset.i,1);renderCart()}
+  if(r){cart.splice(+r.dataset.rm,1);renderCart()}
+};
+function checkout(){
+  const nr='KS-'+Math.floor(100000+Math.random()*900000);
+  cart.length=0; renderCart();
+  $('#cartBody').innerHTML=`<div class="drawer-empty"><h3 style="color:var(--ink);font-size:24px">${t('orderT',{n:nr})}</h3><p style="margin-top:10px">${t('orderP',{m:esc(currentUser?currentUser.mail:'')})}</p></div>`;
+}
+function openCart(){$('#drawer').classList.add('open');$('#drawer').setAttribute('aria-hidden','false');$('#scrim').hidden=false;$('#drawerClose').focus()}
+function closeCart(){$('#drawer').classList.remove('open');$('#drawer').setAttribute('aria-hidden','true');$('#scrim').hidden=true}
+$('#cartBtn').onclick=openCart; $('#drawerClose').onclick=closeCart; $('#scrim').onclick=closeCart;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCart()});
+
+/* =========================================================
+   Virtuelle Anprobe
+   ========================================================= */
+const to={id:'mila',ci:0,x:50,y:42,w:46,rot:0,stream:null,mode:'none',timer:null,detector:null,msgKey:'mDefault',msgErr:false};
+const stage=$('#toStage'), gl=$('#toGlasses'), video=$('#toVideo'), photo=$('#toPhoto');
+function openTryOn(id,ci){loadLandmarker();to.id=id;to.ci=ci;renderTryOn();placeGlasses();if(!$('#toDialog').open)$('#toDialog').showModal()}
+function renderTryOn(){
+  const p=byId(to.id);
+  gl.innerHTML=frameSVG(p,p.colors[to.ci][1]);
+  $('#toModel').textContent=`${p.name}, ${tr(p.colors[to.ci][0])}, ${eur(p.price)}`;
+  $('#toColors').innerHTML=p.colors.map((c,i)=>`<button class="dot" data-i="${i}" style="background:${c[1]}" aria-label="${t('colorX',{c:tr(c[0])})}" aria-pressed="${i===to.ci}"></button>`).join('');
+  $('#toStrip').innerHTML=PRODUCTS.map(x=>`<button data-id="${x.id}" aria-pressed="${x.id===to.id}">${frameSVG(x,x.colors[0][1])}${x.name}</button>`).join('');
+}
+function placeGlasses(){
+  gl.style.left=to.x+'%'; gl.style.top=to.y+'%'; gl.style.width=to.w+'%';
+  gl.style.transform=`translate(-50%,-50%) rotate(${to.rot}deg)`;
+  $('#toSize').value=Math.round(to.w); $('#toSizeVal').textContent=Math.round(to.w)+' %';
+  $('#toRot').value=Math.round(to.rot); $('#toRotVal').textContent=Math.round(to.rot)+'°';
+}
+$('#toColors').onclick=e=>{const b=e.target.closest('button');if(b){to.ci=+b.dataset.i;renderTryOn()}};
+$('#toStrip').onclick=e=>{const b=e.target.closest('button');if(b){to.id=b.dataset.id;to.ci=0;renderTryOn()}};
+$('#toSize').oninput=e=>{to.w=+e.target.value;$('#toAuto').checked=false;placeGlasses()};
+$('#toRot').oninput=e=>{to.rot=+e.target.value;$('#toAuto').checked=false;placeGlasses()};
+$('#toBuy').onclick=()=>{const {id,ci}=to;$('#toDialog').close();openDetail(id,ci)};
+function setMsg(k,isErr){to.msgKey=k;to.msgErr=!!isErr;const m=$('#toMsg');m.textContent=t(k);m.classList.toggle('error',!!isErr)}
+function showSource(mode){to.mode=mode;video.hidden=mode!=='camera';photo.hidden=mode!=='photo';$('#toPlaceholder').hidden=mode!=='none';gl.hidden=mode==='none'}
+async function startCamera(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setMsg('mNoSupport',true);return}
+  try{
+    stopCamera();
+    to.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},audio:false});
+    video.srcObject=to.stream; await video.play();
+    showSource('camera'); $('#toCam').textContent=t('camStop');
+    startTracking();
+  }catch(err){
+    setMsg({NotAllowedError:'mBlocked',NotFoundError:'mNotFound',NotReadableError:'mBusy'}[err.name]||'mGeneric',true);
+  }
+}
+function stopCamera(){if(to.stream){to.stream.getTracks().forEach(x=>x.stop());to.stream=null}cancelAnimationFrame(rafId);$('#toCam').textContent=t('camStart');$('#toStatus').hidden=true}
+$('#toCam').onclick=()=>{if(to.stream){stopCamera();showSource('none');setMsg('mStopped')}else startCamera()};
+$('#toFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  stopCamera();
+  photo.onload=()=>{showSource('photo');setMsg('mPhoto');detectPhoto()};
+  photo.src=URL.createObjectURL(f); e.target.value='';
+};
+$('#toDialog').addEventListener('close',()=>{stopCamera();showSource('none');setMsg('mDefault')});
+let drag=null;
+gl.addEventListener('pointerdown',e=>{drag={sx:e.clientX,sy:e.clientY,x:to.x,y:to.y,r:stage.getBoundingClientRect()};gl.setPointerCapture(e.pointerId);$('#toAuto').checked=false;setMsg('mManual')});
+gl.addEventListener('pointermove',e=>{if(!drag)return;to.x=Math.min(100,Math.max(0,drag.x+(e.clientX-drag.sx)/drag.r.width*100));to.y=Math.min(100,Math.max(0,drag.y+(e.clientY-drag.sy)/drag.r.height*100));placeGlasses()});
+gl.addEventListener('pointerup',()=>drag=null);
+gl.addEventListener('keydown',e=>{const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(d){e.preventDefault();to.x+=d[0];to.y+=d[1];$('#toAuto').checked=false;placeGlasses()}});
+function mapPoint(px,py,sw,sh,mirror){
+  const W=stage.clientWidth,H=stage.clientHeight,s=Math.max(W/sw,H/sh);
+  let x=px*s+(W-sw*s)/2; const y=py*s+(H-sh*s)/2; if(mirror)x=W-x;
+  return [x/W*100,y/H*100,s/W*100];
+}
+/* Gesichtserkennung mit MediaPipe Face Landmarker (läuft komplett im Browser) */
+const MP='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+let landmarker=null, lmPromise=null, lmMode='VIDEO', rafId=null, lastVideoTime=-1;
+function loadLandmarker(){
+  if(!lmPromise) lmPromise=(async()=>{
+    const v=await import(MP+'/vision_bundle.mjs');
+    const files=await v.FilesetResolver.forVisionTasks(MP+'/wasm');
+    const opts=d=>({baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:d},runningMode:'VIDEO',numFaces:1});
+    try{landmarker=await v.FaceLandmarker.createFromOptions(files,opts('GPU'))}
+    catch(e){landmarker=await v.FaceLandmarker.createFromOptions(files,opts('CPU'))}
+    lmMode='VIDEO'; return landmarker;
+  })().catch(e=>{console.warn(e);lmPromise=null;return null});
+  return lmPromise;
+}
+async function setLmMode(m){if(landmarker&&lmMode!==m){await landmarker.setOptions({runningMode:m});lmMode=m}}
+function applyFace(lm,sw,sh,mirror){
+  if(!lm){$('#toStatus').hidden=false;$('#toStatus').textContent=t('noFace');return}
+  $('#toStatus').hidden=true;
+  const P=i=>[lm[i].x*sw,lm[i].y*sh];
+  const mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
+  const eyeR=mid(P(33),P(133)), eyeL=mid(P(362),P(263));          // Augenmitten
+  const [ax,ay,k]=mapPoint(eyeR[0],eyeR[1],sw,sh,mirror), [bx,by]=mapPoint(eyeL[0],eyeL[1],sw,sh,mirror);
+  const d=Math.hypot(eyeL[0]-eyeR[0],eyeL[1]-eyeR[1]);
+  const tx=(ax+bx)/2, ty=(ay+by)/2, tw=d*k/0.45*1.02;                 // Glasmitten liegen bei 45 % der SVG-Breite
+  const Lp=ax<bx?[ax,ay,bx,by]:[bx,by,ax,ay];
+  const trot=Math.atan2((Lp[3]-Lp[1])*stage.clientHeight,(Lp[2]-Lp[0])*stage.clientWidth)*180/Math.PI;
+  const s=0.55; to.x+=(tx-to.x)*s; to.y+=(ty-to.y)*s; to.w+=(tw-to.w)*s; to.rot+=(trot-to.rot)*s; placeGlasses();
+}
+async function startTracking(){
+  cancelAnimationFrame(rafId);
+  if(!$('#toAuto').checked){setMsg('mManual');return}
+  setMsg('mLoadingFace');
+  const lmk=await loadLandmarker();
+  if(!lmk){setMsg('mNoTrack');return}
+  if(to.mode!=='camera') return;
+  await setLmMode('VIDEO'); setMsg('mFollow');
+  const loop=()=>{
+    if(to.mode!=='camera'||!to.stream) return;
+    if($('#toAuto').checked&&video.videoWidth&&video.currentTime!==lastVideoTime&&!drag){
+      lastVideoTime=video.currentTime;
+      try{const r=landmarker.detectForVideo(video,performance.now());applyFace(r.faceLandmarks[0],video.videoWidth,video.videoHeight,true)}catch(e){}
+    }
+    rafId=requestAnimationFrame(loop);
+  };
+  loop();
+}
+async function detectPhoto(){
+  if(!$('#toAuto').checked) return;
+  setMsg('mLoadingFace');
+  const lmk=await loadLandmarker(); if(!lmk){setMsg('mNoTrack');return}
+  await setLmMode('IMAGE');
+  try{const r=landmarker.detect(photo);applyFace(r.faceLandmarks[0],photo.naturalWidth,photo.naturalHeight,false);setMsg(r.faceLandmarks[0]?'mPhotoDone':'mPhoto')}catch(e){setMsg('mPhoto')}
+}
+$('#toAuto').onchange=e=>{if(!e.target.checked)return;if(to.mode==='photo')detectPhoto();else if(to.mode==='camera')startTracking()};
+$('#toSnap').onclick=()=>{
+  if(to.mode==='none'){setMsg('mNeedSource',true);return}
+  const W=stage.clientWidth*2,H=stage.clientHeight*2,cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  const ctx=cv.getContext('2d'),cam=to.mode==='camera',src=cam?video:photo,sw=cam?video.videoWidth:photo.naturalWidth,sh=cam?video.videoHeight:photo.naturalHeight,s=Math.max(W/sw,H/sh);
+  ctx.save(); if(cam){ctx.translate(W,0);ctx.scale(-1,1)} ctx.drawImage(src,(W-sw*s)/2,(H-sh*s)/2,sw*s,sh*s); ctx.restore();
+  const p=byId(to.id),gw=to.w/100*W,img=new Image();
+  img.onload=()=>{
+    ctx.save();ctx.translate(to.x/100*W,to.y/100*H);ctx.rotate(to.rot*Math.PI/180);ctx.drawImage(img,-gw/2,-gw*0.2,gw,gw*0.4);ctx.restore();
+    const a=document.createElement('a');a.download=`klarsicht-${p.name.toLowerCase()}.png`;a.href=cv.toDataURL('image/png');a.click();toast(t('snapSaved'));
+  };
+  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(frameSVG(p,p.colors[to.ci][1],400));
+};
+
+/* =========================================================
+   Unterseiten: Designer, Kontaktlinsen, Hörakustik, Beratung
+   ========================================================= */
+function renderBrands(){
+  $('#brandTiles').innerHTML=BRANDS.map(b=>{const n=PRODUCTS.filter(p=>p.brand===b.id).length;
+    return `<div class="tile"><div class="brand-mark" style="${b.style}">${b.name}</div><p class="meta">${tr(b.origin)}</p><p>${tr(b.text)}</p>
+      <div class="row"><span class="meta">${t(n===1?'count1':'countN',{n})}</span><button class="btn btn-primary btn-small" data-brand="${b.id}">${t('viewModels')}</button></div></div>`}).join('');
+}
+$('#brandTiles').onclick=e=>{const b=e.target.closest('[data-brand]');if(b)showCollection(()=>filters.brand=b.dataset.brand)};
+
+const powers=[];for(let v=-8;v<=6.001;v+=0.25)powers.push((v>0?'+':'')+v.toFixed(2));
+const fmtPower=v=>lang==='de'?v.replace('.',','):v;
+function renderCL(){
+  const keep={}; CL.forEach(c=>{const s=$('#pw-'+c.id);if(s)keep[c.id]=s.value});
+  $('#clTiles').innerHTML=CL.map(c=>`<div class="tile" data-cl="${c.id}">
+    <svg class="icon" viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M8 36 Q28 6 48 36"/><ellipse cx="28" cy="36" rx="20" ry="5"/></svg>
+    <h3>${tr(c.name)}</h3><p class="meta">${tr(c.pack)}</p><p>${tr(c.text)}</p>
+    ${c.power?`<div class="field" style="margin:4px 0 0"><label for="pw-${c.id}">${t('power')}</label><select id="pw-${c.id}">${powers.map(v=>`<option value="${v}" ${v===(keep[c.id]||'-1.50')?'selected':''}>${fmtPower(v)}</option>`).join('')}</select></div>`:''}
+    <div class="row"><span class="price">${eur(c.price)}</span><button class="btn btn-primary btn-small" data-add>${t('addCart')}</button></div></div>`).join('');
+}
+$('#clTiles').onclick=e=>{
+  if(!e.target.closest('[data-add]'))return;
+  const id=e.target.closest('[data-cl]').dataset.cl,c=CL.find(x=>x.id===id);
+  addSimple(id,c.power?$('#pw-'+id).value:null);
+};
+function renderHear(){
+  $('#hearTiles').innerHTML=HEAR.map(h=>`<div class="tile" data-h="${h.id}"><h3>${tr(h.name)}</h3><p class="meta">${tr(h.pack)}</p><p>${tr(h.text)}</p>
+    <div class="row"><span class="price">${eur(h.price)}</span><button class="btn btn-ghost btn-small" data-add>${t('addCart')}</button></div></div>`).join('');
+}
+$('#hearTiles').onclick=e=>{if(e.target.closest('[data-add]'))addSimple(e.target.closest('[data-h]').dataset.h)};
+
+let face='oval';
+function renderFace(){
+  $('#facePills').innerHTML=Object.keys(FACES).map(k=>`<button class="pill" data-face="${k}" aria-pressed="${k===face}">${tr(FACES[k].label)}</button>`).join('');
+  const f=FACES[face];
+  $('#faceResult').innerHTML=`<p class="opt-title">${t('fitShapes',{s:f.shapes.map(s=>tr(SHAPES[s])).join(', ')})}</p><p>${tr(f.text)}</p>
+    <div style="display:flex;justify-content:center;gap:10px;margin-bottom:18px">${f.shapes.slice(0,3).map(s=>`<div style="width:30%">${frameSVG({shape:s,material:'Acetat',type:'Korrektion'},'var(--ink)')}</div>`).join('')}</div>
+    <button class="btn btn-primary" id="faceGo">${t('faceGo')}</button>`;
+  $('#faceGo').onclick=()=>showCollection(()=>f.shapes.forEach(s=>filters.shapes.add(s)));
+}
+$('#facePills').onclick=e=>{const b=e.target.closest('[data-face]');if(b){face=b.dataset.face;renderFace()}};
+function renderFaq(){
+  const open=[...document.querySelectorAll('#faqList details')].map(d=>d.open);
+  $('#faqList').innerHTML=FAQ.map(([q,a],i)=>`<details ${open[i]?'open':''}><summary>${tr(q)}</summary><p>${tr(a)}</p></details>`).join('');
+}
+
+/* =========================================================
+   Termin buchen
+   ========================================================= */
+const booking={service:'seh',slot:null,store:''};
+const appointments=[]; let lastBooking=null;
+const isoDate=d=>new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+const longDate=v=>new Date(v+'T12:00').toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+function bookService(id){booking.service=id;booking.slot=null;resetBookingView();go('termin')}
+function bookAt(storeId){booking.store=storeId;booking.slot=null;resetBookingView();go('termin')}
+function resetBookingView(){$('#bkConfirm').hidden=true;$('#bookingForm').hidden=false}
+(function initDate(){
+  const d=new Date();d.setDate(d.getDate()+1);if(d.getDay()===0)d.setDate(d.getDate()+1);
+  const max=new Date();max.setDate(max.getDate()+60);
+  $('#bkDate').min=isoDate(new Date());$('#bkDate').value=isoDate(d);$('#bkDate').max=isoDate(max);
+})();
+function takenSlots(date,store){let h=0;for(const ch of date+store)h=(h*31+ch.charCodeAt(0))%9973;return SLOTS.filter((_,i)=>(h+i*7)%4===0)}
+function renderBooking(){
+  $('#bkService').innerHTML=SERVICES.map(x=>`<button type="button" class="pill" data-v="${x.id}" aria-pressed="${x.id===booking.service}">${tr(x.label)}<small>${tr(x.dur)}</small></button>`).join('');
+  $('#bkStore').innerHTML=`<option value="">${t('chooseStore')}</option>`+[...STORES].sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  $('#bkStore').value=booking.store;
+  const date=$('#bkDate').value, sunday=date&&new Date(date+'T12:00').getDay()===0, taken=takenSlots(date,booking.store);
+  if(taken.includes(booking.slot)) booking.slot=null;
+  $('#bkSlotHint').textContent=sunday?t('sundayClosed'):'';
+  $('#bkSlots').innerHTML=SLOTS.map(x=>`<button type="button" class="pill" data-t="${x}" aria-pressed="${x===booking.slot}" ${sunday||taken.includes(x)?'disabled':''}>${x}</button>`).join('');
+  if(currentUser){if(!$('#bkName').value)$('#bkName').value=currentUser.first+' '+currentUser.last;if(!$('#bkMail').value)$('#bkMail').value=currentUser.mail}
+  $('#myAppts').innerHTML=appointments.length?`<h3>${t('myAppts')}</h3><ul>${appointments.map(a=>`<li><strong>${tr(SERVICES.find(s=>s.id===a.service).label)}</strong><span>${t('apptLine',{d:longDate(a.date),t:a.slot})}</span><span>${t('storeX',{s:storeById(a.store).name})}</span></li>`).join('')}</ul>`:'';
+}
+$('#bkService').onclick=e=>{const b=e.target.closest('button');if(b){booking.service=b.dataset.v;renderBooking()}};
+$('#bkSlots').onclick=e=>{const b=e.target.closest('button');if(b&&!b.disabled){booking.slot=b.dataset.t;renderBooking()}};
+$('#bkStore').onchange=e=>{booking.store=e.target.value;renderBooking()};
+$('#bkDate').onchange=renderBooking;
+$('#bookingForm').onsubmit=e=>{
+  e.preventDefault();
+  const err=$('#bkErr'),date=$('#bkDate').value,name=$('#bkName').value.trim(),mail=$('#bkMail').value.trim();
+  const bad=k=>err.textContent=t(k);
+  if(!booking.store) return bad('errStore');
+  if(!date) return bad('errDate');
+  if(new Date(date+'T12:00').getDay()===0) return bad('errSunday');
+  if(!booking.slot) return bad('errSlot');
+  if(!name) return bad('errNameB');
+  if(!mailOk(mail)) return bad('errMailB');
+  err.textContent='';
+  lastBooking={service:booking.service,date,slot:booking.slot,store:booking.store,mail};
+  appointments.push(lastBooking); showBookingConfirm(lastBooking); renderBooking(); toast(t('bookedToast'));
+};
+function showBookingConfirm(b){
+  $('#bookingForm').hidden=true; $('#bkConfirm').hidden=false;
+  $('#bkConfirm').innerHTML=`<h2>${t('booked')}</h2><p>${t('bookedP',{s:tr(SERVICES.find(x=>x.id===b.service).label),d:longDate(b.date),t:b.slot,st:storeById(b.store).name,m:esc(b.mail)})}</p><button class="btn btn-ghost" id="bkAgain">${t('again')}</button>`;
+  $('#bkAgain').onclick=()=>{booking.slot=null;resetBookingView();renderBooking()};
+}
+
+/* =========================================================
+   Filialfinder mit Karte
+   ========================================================= */
+const finder={q:'',origin:null,originLabel:'',hearOnly:false,selected:null,error:'',loading:false};
+let map=null; const markers={}; let youMarker=null;
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss');
+function km(a,b){const R=6371,r=x=>x*Math.PI/180,dl=r(b.lat-a.lat),dg=r(b.lng-a.lng);
+  const h=Math.sin(dl/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+const fmtKm=d=>d.toLocaleString(loc(),{maximumFractionDigits:d<10?1:0})+' km';
+function textMatches(q){const n=norm(q);return STORES.filter(s=>[s.name,s.street,s.zip,s.city,s.alias||''].some(x=>norm(x).includes(n)))}
+function storeList(){
+  let list=STORES.filter(s=>!finder.hearOnly||s.hearing);
+  if(finder.origin) return list.map(s=>({...s,dist:km(finder.origin,s)})).sort((a,b)=>a.dist-b.dist);
+  if(finder.q){const ids=new Set(textMatches(finder.q).map(s=>s.id));list=list.filter(s=>ids.has(s.id))}
+  return list.sort((a,b)=>a.name.localeCompare(b.name));
+}
+function hoursFor(s,day){const h=HOURS[s.hours];return day===0?null:day===6?h.sat:h.wk}
+function openState(s){
+  const now=new Date(),day=now.getDay(),hm=now.toTimeString().slice(0,5),h=hoursFor(s,day);
+  if(h&&hm>=h[0]&&hm<h[1]) return {open:true,text:t('sOpen',{t:h[1]})};
+  for(let i=0;i<7;i++){const d=(day+i)%7,hh=hoursFor(s,d);if(!hh)continue;if(i===0&&hm>=hh[0])continue;
+    const label=i===0?t('today'):i===1?t('tomorrow'):new Date(now.getTime()+i*864e5).toLocaleDateString(loc(),{weekday:'long'});
+    return {open:false,text:t('sClosedOpens',{d:label,t:hh[0]})}}
+  return {open:false,text:t('sClosed')};
+}
+function renderStores(){
+  const body=$('#finderBody');
+  if(finder.selected){
+    const s=storeById(finder.selected),st=openState(s),h=HOURS[s.hours],day=new Date().getDay();
+    const services=[['Sehtest','Eye test'],['Kontaktlinsen','Contact lenses'],['Brillen-Service','Glasses service']].concat(s.hearing?[['Hörakustik','Hearing care']]:[]);
+    body.innerHTML=`<div class="store-detail">
+      <button class="linkbtn" id="storeBack"><svg width="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M15 5l-7 7 7 7"/></svg>${t('sBack')}</button>
+      <div><h2>Klarsicht ${s.name}</h2><span class="status ${st.open?'open':'closed'}">${st.text}</span></div>
+      <dl>
+        <dt>${t('sAddress')}</dt><dd>${s.street}<br>${s.zip} ${s.city}</dd>
+        <dt>${t('sPhone')}</dt><dd><a href="tel:${s.phone.replace(/\s/g,'')}">${s.phone}</a></dd>
+        <dt>${t('email')}</dt><dd><a href="mailto:${s.email}">${s.email}</a></dd>
+        <dt>${t('sContact')}</dt><dd>${s.contact}<small>${tr(ROLES[s.role])}</small></dd>
+      </dl>
+      <div><p class="opt-title">${t('sHours')}</p><table class="hours">
+        <tr class="${day>=1&&day<=5?'today':''}"><td>${t('hWeek')}</td><td>${h.wk[0]}–${h.wk[1]}</td></tr>
+        <tr class="${day===6?'today':''}"><td>${t('hSat')}</td><td>${h.sat[0]}–${h.sat[1]}</td></tr>
+        <tr class="${day===0?'today':''}"><td>${t('hSun')}</td><td>${t('hClosed')}</td></tr></table></div>
+      <div><p class="opt-title">${t('sServices')}</p><div class="tags">${services.map(x=>`<span class="tag">${tr(x)}</span>`).join('')}</div></div>
+      <div class="btns">
+        <button class="btn btn-primary btn-small" id="storeBook">${t('sBookHere')}</button>
+        <a class="btn btn-ghost btn-small" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.street+', '+s.zip+' '+s.city)}">${t('sRoute')}</a>
+      </div></div>`;
+    $('#storeBack').onclick=()=>{finder.selected=null;renderStores();fitMap()};
+    $('#storeBook').onclick=()=>bookAt(s.id);
+  }else{
+    const list=storeList();
+    let head=finder.loading?t('sSearching'):finder.error?finder.error:finder.origin?(finder.originLabel?t('sNear',{q:esc(finder.originLabel)}):t('sNearYou')):t(list.length===1?'sCount1':'sCountN',{n:list.length});
+    if(!finder.loading&&!finder.error&&finder.q&&!finder.origin&&!list.length) head=t('sNone',{q:esc(finder.q)});
+    body.innerHTML=`<p class="finder-head ${finder.error?'error':''}" role="status">${head}</p>`+list.map(s=>{const st=openState(s);
+      return `<button class="store-item" data-store="${s.id}"><h3>${s.name}${s.dist!=null?`<span>${fmtKm(s.dist)}</span>`:''}</h3>
+        <p>${s.street}, ${s.zip} ${s.city}</p><span class="status ${st.open?'open':'closed'}">${st.text}</span></button>`}).join('');
+  }
+  updateMarkers();
+}
+$('#finderBody').addEventListener('click',e=>{const b=e.target.closest('[data-store]');if(b)selectStore(b.dataset.store)});
+function selectStore(id){
+  finder.selected=id; renderStores(); $('#finderBody').scrollTop=0;
+  if(map){const s=storeById(id);map.flyTo([s.lat,s.lng],15,{duration:.6})}
+}
+$('#storeQ').addEventListener('input',e=>{finder.q=e.target.value.trim();finder.origin=null;finder.error='';finder.selected=null;renderStores();fitMap()});
+$('#storeSearch').onsubmit=async e=>{
+  e.preventDefault(); const q=$('#storeQ').value.trim(); finder.q=q; finder.selected=null; finder.error='';
+  if(!q||textMatches(q).length){finder.origin=null;renderStores();fitMap();return}
+  finder.loading=true; renderStores();
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=de,at,ch&accept-language=${lang}&q=${encodeURIComponent(q)}`);
+    const j=await r.json();
+    if(j[0]){finder.origin={lat:+j[0].lat,lng:+j[0].lon};finder.originLabel=q}else{finder.origin=null}
+  }catch(err){finder.origin=null}
+  finder.loading=false; renderStores(); fitMap(4);
+};
+$('#hearOnly').onchange=e=>{finder.hearOnly=e.target.checked;finder.selected=null;renderStores();fitMap()};
+$('#locateBtn').onclick=()=>{
+  if(!navigator.geolocation){finder.error=t('sLocErr');renderStores();return}
+  finder.loading=true;finder.error='';finder.selected=null;renderStores();
+  navigator.geolocation.getCurrentPosition(pos=>{
+    finder.loading=false; finder.origin={lat:pos.coords.latitude,lng:pos.coords.longitude}; finder.originLabel=''; finder.q=''; $('#storeQ').value='';
+    if(map&&window.L){if(youMarker)youMarker.remove();youMarker=L.marker([finder.origin.lat,finder.origin.lng],{icon:L.divIcon({className:'you',html:'<span></span>',iconSize:[24,24],iconAnchor:[12,12]})}).addTo(map).bindTooltip(t('sYou'))}
+    renderStores(); fitMap(4);
+  },()=>{finder.loading=false;finder.error=t('sLocErr');renderStores()},{timeout:10000});
+};
+function pinIcon(active){return L.divIcon({className:'pin'+(active?' active':''),html:'<span></span>',iconSize:[28,28],iconAnchor:[14,30]})}
+function initMap(){
+  if(map) return;
+  if(!window.L){$('#mapBox').innerHTML=`<p class="map-err">${t('sMapErr')}</p>`;return}
+  map=L.map('mapBox',{scrollWheelZoom:false}).setView([51.1,10.4],6);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+  STORES.forEach(s=>{
+    const m=L.marker([s.lat,s.lng],{icon:pinIcon(false),title:'Klarsicht '+s.name,keyboard:true,riseOnHover:true}).addTo(map);
+    m.bindTooltip(s.name,{direction:'top',offset:[0,-26]}); m.on('click',()=>selectStore(s.id)); markers[s.id]=m;
+  });
+  updateMarkers(); fitMap();
+}
+function updateMarkers(){
+  if(!map) return;
+  const visible=new Set(storeList().map(s=>s.id));
+  STORES.forEach(s=>{const m=markers[s.id];m.setIcon(pinIcon(finder.selected===s.id));m.setOpacity(visible.has(s.id)||finder.selected===s.id?1:.35);m.setZIndexOffset(finder.selected===s.id?1000:0)});
+}
+function fitMap(limit){
+  if(!map||finder.selected) return;
+  let list=storeList(); if(limit) list=list.slice(0,limit);
+  const pts=list.map(s=>[s.lat,s.lng]); if(finder.origin) pts.push([finder.origin.lat,finder.origin.lng]);
+  if(pts.length) map.fitBounds(pts,{padding:[50,50],maxZoom:13});
+}
+
+/* =========================================================
+   Navigation zwischen den Seiten
+   ========================================================= */
+const PAGES=['designer','kontaktlinsen','hoerakustik','beratung','termin','filialen'];
+let pending=null;
+let routeState=(()=>{try{return location.hash.replace(/^#\/?/,'')}catch(e){return ''}})();
+const currentRoute=()=>routeState;
+function navigate(r){routeState=r;try{history.pushState(null,'','#/'+r)}catch(e){}route()}
+function go(r){navigate(r)}
+window.addEventListener('popstate',()=>{try{routeState=location.hash.replace(/^#\/?/,'')}catch(e){}route()});
+function route(){
+  const r=currentRoute(), view=PAGES.includes(r)?r:'home';
+  document.querySelectorAll('.view').forEach(v=>v.hidden=v.id!=='view-'+view);
+  document.querySelectorAll('#mainNav a').forEach(a=>a.dataset.route===r?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
+  r==='filialen'?$('#storeLink').setAttribute('aria-current','page'):$('#storeLink').removeAttribute('aria-current');
+  closeMenu();
+  if(r==='brillen'||r==='sonnenbrillen'){
+    resetFilters(); filters.type=r==='brillen'?'Korrektion':'Sonnenbrille'; syncFilterUI(); renderGrid(); requestAnimationFrame(goCollection);
+  }else if(view==='home'&&pending){pending();pending=null}
+  else window.scrollTo(0,0);
+  if(view==='termin') renderBooking();
+  if(view==='filialen') setTimeout(()=>{initMap();if(map){map.invalidateSize();if(!finder.selected)fitMap()}},30);
+}
+function showCollection(apply){
+  pending=()=>{resetFilters();apply();syncFilterUI();renderGrid();requestAnimationFrame(goCollection)};
+  navigate('');
+}
+document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#/"]');if(a){e.preventDefault();closeFly();navigate(a.getAttribute('href').slice(2))}});
+function closeMenu(){$('#mainNav').classList.remove('open');$('#menuBtn').setAttribute('aria-expanded','false')}
+$('#menuBtn').onclick=()=>{const o=$('#mainNav').classList.toggle('open');$('#menuBtn').setAttribute('aria-expanded',o)};
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+document.addEventListener('click',e=>{const b=e.target.closest('[data-book]');if(b)bookService(b.dataset.book)});
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
+
+/* =========================================================
+   Aufklappmenüs in der Navigation
+   ========================================================= */
+const col=(title,items)=>({title,items});
+const it=(label,fn)=>({label,fn});
+const filt=fn=>()=>showCollection(fn);
+const FLY={
+  brillen:{cols:[
+    col(['Für','For'],Object.keys(CATS).map(k=>it(CATS[k],filt(()=>{filters.type='Korrektion';filters.cat=k})))),
+    col(['Form','Shape'],Object.keys(SHAPES).map(k=>it(SHAPES[k],filt(()=>{filters.type='Korrektion';filters.shapes.add(k)})))),
+    col(['Material','Material'],Object.keys(MATS).map(k=>it(MATS[k],filt(()=>{filters.type='Korrektion';filters.materials.add(k)}))).concat([it(['Alle Brillen','All glasses'],()=>go('brillen'))]))],
+    feature:{p:'mila',label:['Mit Kamera anprobieren','Try on with camera'],fn:()=>openTryOn('mila',0)}},
+  sonnenbrillen:{cols:[
+    col(['Für','For'],['Damen','Herren','Unisex'].map(k=>it(CATS[k],filt(()=>{filters.type='Sonnenbrille';filters.cat=k})))),
+    col(['Form','Shape'],['pilot','cateye','eckig','oversize'].map(k=>it(SHAPES[k],filt(()=>{filters.type='Sonnenbrille';filters.shapes.add(k)})))),
+    col(['Entdecken','Explore'],[it(['Alle Sonnenbrillen','All sunglasses'],()=>go('sonnenbrillen')),it(['Unter 120 €','Under €120'],filt(()=>{filters.type='Sonnenbrille';filters.max=120}))])],
+    feature:{p:'nova',label:['Nova ansehen','View Nova'],fn:()=>openDetail('nova',0)}},
+  designer:{cols:[
+    col(['Marken','Brands'],BRANDS.slice(0,3).map(b=>it([b.name,b.name],filt(()=>filters.brand=b.id)))),
+    col(['',''],BRANDS.slice(3).map(b=>it([b.name,b.name],filt(()=>filters.brand=b.id)))),
+    col(['Entdecken','Explore'],[it(['Alle Marken','All brands'],()=>go('designer'))])],
+    feature:{p:'konrad',label:['Studio Haru','Studio Haru'],fn:filt(()=>filters.brand='haru')}},
+  kontaktlinsen:{cols:[
+    col(['Linsen','Lenses'],CL.filter(c=>c.power).map(c=>it(c.name,()=>go('kontaktlinsen')))),
+    col(['Pflege','Care'],CL.filter(c=>!c.power).map(c=>it(c.name,()=>go('kontaktlinsen')))),
+    col(['Service','Service'],[it(['Anpassung buchen','Book a fitting'],()=>bookService('cl'))])],
+    feature:{p:'ava',label:['Alle Kontaktlinsen','All contact lenses'],fn:()=>go('kontaktlinsen')}},
+  hoerakustik:{cols:[
+    col(['Service','Service'],[it(['Kostenloser Hörtest','Free hearing test'],()=>bookService('hoer')),it(['Hörgeräte testen','Try hearing aids'],()=>bookService('hoer'))]),
+    col(['Zubehör','Accessories'],HEAR.map(h=>it(h.name,()=>go('hoerakustik')))),
+    col(['Entdecken','Explore'],[it(['Alles zur Hörakustik','All about hearing care'],()=>go('hoerakustik'))])],
+    feature:{p:'theo',label:['Hörtest buchen','Book a hearing test'],fn:()=>bookService('hoer')}},
+  beratung:{cols:[
+    col(['Ratgeber','Guides'],[it(['Welche Form passt zu mir?','Which shape suits me?'],()=>go('beratung')),it(['Häufige Fragen','FAQ'],()=>go('beratung'))]),
+    col(['Filialen','Stores'],[it(['Filiale finden','Find a store'],()=>go('filialen'))]),
+    col(['Online','Online'],[it(['Virtuell anprobieren','Virtual try-on'],()=>openTryOn('mila',0))])],
+    feature:{p:'juna',label:['Formberater starten','Start the shape guide'],fn:()=>go('beratung')}},
+  termin:{cols:[
+    col(['Leistung','Service'],SERVICES.map(x=>it(x.label,()=>bookService(x.id)))),
+    col(['Filialen','Stores'],[it(['Filiale finden','Find a store'],()=>go('filialen'))]),
+    col(['',''],[])],
+    feature:{p:'henrik',label:['Sehtest buchen','Book an eye test'],fn:()=>bookService('seh')}}
+};
+let flyKey=null, flyTimer=null;
+function openFly(key){
+  const f=FLY[key]; if(!f||matchMedia('(max-width:1280px)').matches) return;
+  clearTimeout(flyTimer); flyKey=key;
+  document.querySelectorAll('#mainNav a').forEach(a=>a.classList.toggle('hot',a.dataset.route===key));
+  const p=byId(f.feature.p);
+  $('#flyout').innerHTML=`<div class="wrap fly-in">${f.cols.map((c,ci)=>`<div class="fly-col">${tr(c.title)?`<h3>${tr(c.title)}</h3>`:'<h3>&nbsp;</h3>'}<ul>${c.items.map((x,ii)=>`<li><button data-fly="${ci}-${ii}">${tr(x.label)}</button></li>`).join('')}</ul></div>`).join('')}
+    <button class="fly-feature" data-fly="feature"><img src="${photoUrl(p,600)}" alt="" loading="lazy"><span>${tr(f.feature.label)}</span></button></div>`;
+  $('#flyout').hidden=false;
+}
+function closeFly(){flyKey=null;$('#flyout').hidden=true;document.querySelectorAll('#mainNav a.hot').forEach(a=>a.classList.remove('hot'))}
+document.querySelectorAll('#mainNav a').forEach(a=>{
+  a.addEventListener('mouseenter',()=>openFly(a.dataset.route));
+  a.addEventListener('focus',()=>openFly(a.dataset.route));
+});
+$('header').addEventListener('mouseleave',()=>{flyTimer=setTimeout(closeFly,150)});
+$('#flyout').addEventListener('mouseenter',()=>clearTimeout(flyTimer));
+$('.search').addEventListener('mouseenter',closeFly);
+$('#flyout').addEventListener('click',e=>{
+  const b=e.target.closest('[data-fly]'); if(!b||!flyKey) return;
+  const f=FLY[flyKey], v=b.dataset.fly; closeFly(); closeMenu();
+  if(v==='feature') return f.feature.fn();
+  const [ci,ii]=v.split('-').map(Number); f.cols[ci].items[ii].fn();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeFly()});
+
+/* =========================================================
+   Start
+   ========================================================= */
+applyStatic();
+$('#toCam').textContent=t('camStart'); setMsg('mDefault');
+syncFilterUI(); renderGrid(); renderHero(false); renderCart(); renderBrands(); renderCL(); renderHear();
+renderFace(); renderFaq(); renderBooking(); renderStores(); updateFootNewsletter(); route();
+</script>
+</body>
+</html>
